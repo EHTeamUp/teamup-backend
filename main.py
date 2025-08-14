@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from config import settings
+# Import all models to ensure they are registered with SQLAlchemy
+from models import *
 
 # 데이터베이스 테이블 생성 (MySQL 연결이 가능할 때만)
 try:
