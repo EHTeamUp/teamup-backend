@@ -3,19 +3,32 @@ from typing import Optional, List
 from datetime import date
 
 class UserBase(BaseModel):
-    name: str
-    email: EmailStr
+    user_id: str = Field(example="user123", description="사용자 ID")
+    name: str = Field(example="홍길동", description="사용자 이름")
+    email: EmailStr = Field(example="user@example.com", description="이메일")
 
 class UserCreate(BaseModel):
-    user_id: str
-    name: str
-    email: EmailStr
-    password: str
+    user_id: str = Field(example="user123", description="사용자 ID")
+    name: str = Field(example="홍길동", description="사용자 이름")
+    email: EmailStr = Field(example="user@example.com", description="이메일")
+    password: str = Field(example="password123", description="비밀번호")
 
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
+class User(UserBase):
+    is_deleted: bool = Field(example=False, description="삭제 여부")
+    
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    user_id: str = Field(example="user123", description="사용자 ID")
+    password: str = Field(example="password123", description="비밀번호")
+
+class Token(BaseModel):
+    access_token: str = Field(example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", description="액세스 토큰")
+    token_type: str = Field(example="bearer", description="토큰 타입")
+
+class LogoutResponse(BaseModel):
+    message: str = Field(example="로그아웃이 완료되었습니다.", description="로그아웃 메시지")
 
 class UserUpdateProfile(BaseModel):
     name: Optional[str] = Field(None, example="홍길동", description="변경할 사용자 이름")
@@ -43,20 +56,11 @@ class ExperienceUpdate(BaseModel):
 class ExperienceCreate(BaseModel):
     experiences: List[ExperienceUpdate] = Field(example=[], description="공모전 수상 경험 목록")
 
-class UserLogin(BaseModel):
-    user_id: str
-    password: str
-
 class User(UserBase):
-    user_id: str
-    is_deleted: bool
-
+    is_deleted: bool = Field(example=False, description="삭제 여부")
+    
     class Config:
         from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None

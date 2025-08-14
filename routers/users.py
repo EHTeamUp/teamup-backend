@@ -3,41 +3,60 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 from schemas.user import (
-    UserUpdate, UserLogin, Token, User as UserSchema,
-    UserUpdateProfile
+    UserLogin, Token, User as UserSchema, 
+    UserUpdateProfile, LogoutResponse
 )
-from utils.auth import create_access_token, get_password_hash, verify_password, get_current_user
+from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user
 from datetime import timedelta
-from config import settings
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/login", response_model=Token)
 def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    """로그인"""
+    """사용자 로그인"""
     try:
-        # 사용자 확인
+        # 사용자 ID로 사용자 조회
         user = db.query(User).filter(User.user_id == user_credentials.user_id).first()
+        
+        # 사용자가 존재하지 않거나 삭제된 경우
         if not user or user.is_deleted:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect user ID or password"
             )
         
-        # 비밀번호 확인
+        # 비밀번호 검증
         if not verify_password(user_credentials.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect user ID or password"
             )
         
-        # 액세스 토큰 생성
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        # JWT 토큰 생성 (24시간 유효)
+        access_token_expires = timedelta(hours=24)
         access_token = create_access_token(
             data={"sub": user.user_id}, expires_delta=access_token_expires
         )
         
-        return {"access_token": access_token, "token_type": "bearer"}
+        return Token(access_token=access_token, token_type="bearer")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@router.post("/logout", response_model=LogoutResponse)
+def logout(current_user: User = Depends(get_current_user)):
+    """사용자 로그아웃"""
+    try:
+        # JWT 토큰은 클라이언트에서 삭제하도록 안내
+        # 서버에서는 현재 사용자 정보만 반환하여 로그아웃 확인
+        return LogoutResponse(
+            message=f"{current_user.name}님, 로그아웃이 완료되었습니다."
+        )
         
     except HTTPException:
         raise
