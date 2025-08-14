@@ -16,7 +16,7 @@ Gmail SMTP를 사용하여 이메일 인증을 설정하는 방법입니다.
 2. **앱 선택**: "메일"
 3. **기기 선택**: "Windows 컴퓨터" 또는 "기타"
 4. **생성** 클릭
-5. **16자리 비밀번호** 복사 (예: `abcd efgh ijkl mnop`)
+5. **16자리 비밀번호** 복사 
 
 ## ⚙️ 환경 변수 설정
 
@@ -35,7 +35,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=abcd efgh ijkl mnop
+SMTP_PASSWORD=your-app-password
 
 # Email Verification
 VERIFICATION_CODE_EXPIRE_MINUTES=10
