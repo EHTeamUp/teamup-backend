@@ -1,13 +1,15 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import date
 
 class UserBase(BaseModel):
-    user_id: str
     name: str
     email: EmailStr
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    user_id: str
+    name: str
+    email: EmailStr
     password: str
 
 class UserUpdate(BaseModel):
@@ -15,18 +17,42 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
 
-class UserInDB(UserBase):
-    is_deleted: bool
-    
-    class Config:
-        from_attributes = True
+class UserUpdateProfile(BaseModel):
+    name: Optional[str] = Field(None, example="홍길동", description="변경할 사용자 이름")
+    current_password: str = Field(example="current123", description="현재 비밀번호 (비밀번호 변경 시 필요)")
+    new_password: Optional[str] = Field(None, example="new123", description="새로운 비밀번호 (변경하지 않을 경우 생략)")
 
-class User(UserInDB):
-    pass
+# 스킬 수정 스키마
+class SkillUpdate(BaseModel):
+    skill_ids: List[int] = Field(example=[1, 2, 3], description="선택할 스킬 ID 목록")
+    custom_skills: List[str] = Field(example=["Flutter", "Dart"], description="사용자가 직접 입력한 스킬들")
+
+# 역할 수정 스키마
+class RoleUpdate(BaseModel):
+    role_ids: List[int] = Field(example=[1, 2], description="선택할 역할 ID 목록")
+    custom_roles: List[str] = Field(example=["DevOps", "QA"], description="사용자가 직접 입력한 역할들")
+
+# 경험 수정 스키마
+class ExperienceUpdate(BaseModel):
+    contest_name: str = Field(example="2024 대학생 소프트웨어 경진대회", description="공모전명")
+    award_date: date = Field(example="2024-12-01", description="수상 날짜")
+    host_organization: Optional[str] = Field(example="한국정보산업연합회", description="주최 기관")
+    award_name: str = Field(example="대상", description="수상명 (예: 대상, 최우수상)")
+    description: Optional[str] = Field(example="팀 프로젝트 매칭 플랫폼으로 수상", description="설명 (어떤 작품으로 수상했는지 등)")
+
+class ExperienceCreate(BaseModel):
+    experiences: List[ExperienceUpdate] = Field(example=[], description="공모전 수상 경험 목록")
 
 class UserLogin(BaseModel):
     user_id: str
     password: str
+
+class User(UserBase):
+    user_id: str
+    is_deleted: bool
+
+    class Config:
+        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
@@ -35,7 +61,51 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     user_id: Optional[str] = None
 
-# ID Duplication Check schemas
+# 이메일 인증 관련 스키마
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr = Field(
+        example="user@teamup.com",
+        description="인증번호를 받을 이메일 주소"
+    )
+
+class EmailVerificationResponse(BaseModel):
+    message: str = Field(
+        description="인증번호 발송 결과 메시지"
+    )
+
+class EmailVerificationCode(BaseModel):
+    email: EmailStr = Field(
+        example="user@teamup.com",
+        description="인증할 이메일 주소"
+    )
+    verification_code: str = Field(
+        example="123456",
+        description="이메일로 받은 6자리 인증번호"
+    )
+
+class UserCreateWithVerification(BaseModel):
+    user_id: str = Field(
+        example="teamup_user",
+        description="사용자 ID"
+    )
+    name: str = Field(
+        example="홍길동",
+        description="사용자 실명"
+    )
+    email: EmailStr = Field(
+        example="user@teamup.com",
+        description="이메일 주소"
+    )
+    password: str = Field(
+        example="password123",
+        description="비밀번호"
+    )
+    verification_code: str = Field(
+        example="123456",
+        description="이메일 인증번호"
+    )
+
+# 사용자 ID 중복 검사 스키마
 class UserIdCheckRequest(BaseModel):
     user_id: str = Field(
         example="teamup_user",
@@ -48,83 +118,4 @@ class UserIdCheckResponse(BaseModel):
     )
     message: str = Field(
         description="중복 검사 결과 메시지"
-    )
-
-# Email Verification schemas
-class EmailVerificationRequest(BaseModel):
-    email: EmailStr = Field(
-        example="user@teamup.com",
-        description="인증번호를 받을 이메일 주소"
-    )
-
-class EmailVerificationResponse(BaseModel):
-    message: str
-    success: bool
-
-class EmailVerificationCode(BaseModel):
-    email: EmailStr = Field(
-        example="user@teamup.com",
-        description="인증할 이메일 주소"
-    )
-    verification_code: str = Field(
-        example="123456",
-        description="6자리 인증번호"
-    )
-
-class UserCreateWithVerification(BaseModel):
-    user_id: str = Field(
-        example="teamup_user",
-        description="사용자 ID (고유값)"
-    )
-    name: str = Field(
-        example="홍길동",
-        description="사용자 실명"
-    )
-    email: EmailStr = Field(
-        example="user@teamup.com",
-        description="이메일 주소"
-    )
-    password: str = Field(
-        example="password123",
-        description="비밀번호 (최소 8자)"
-    )
-    verification_code: str = Field(
-        example="123456",
-        description="이메일로 받은 6자리 인증번호"
-    )
-
-# Skill and Role schemas
-class SkillBase(BaseModel):
-    name: str
-
-class SkillCreate(SkillBase):
-    pass
-
-class Skill(SkillBase):
-    skill_id: int
-    
-    class Config:
-        from_attributes = True
-
-class RoleBase(BaseModel):
-    name: str
-
-class RoleCreate(RoleBase):
-    pass
-
-class Role(RoleBase):
-    role_id: int
-    
-    class Config:
-        from_attributes = True
-
-class UserSkillCreate(BaseModel):
-    skill_id: int
-
-class UserRoleCreate(BaseModel):
-    role_id: int
-
-# User with skills and roles
-class UserWithDetails(User):
-    skills: List[Skill] = []
-    roles: List[Role] = [] 
+    ) 
