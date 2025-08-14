@@ -5,12 +5,14 @@ from database import Base
 class Personality(Base):
     __tablename__ = "personalities"
     
-    personality_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), unique=True, nullable=False)
+    personality_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
     
     # Relationships
-    answers = relationship("Answer", back_populates="personality")
     user_personality_scores = relationship("UserPersonalityScore", back_populates="personality")
+    
+    def __repr__(self):
+        return f"<Personality(personality_id={self.personality_id}, name='{self.name}')>"
 
 class Question(Base):
     __tablename__ = "questions"

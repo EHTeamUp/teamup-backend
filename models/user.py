@@ -18,4 +18,5 @@ class User(Base):
     user_personality_scores = relationship("UserPersonalityScore", back_populates="user")
     recruitment_posts = relationship("RecruitmentPost", back_populates="user")
     applications = relationship("Application", back_populates="user")
-    comments = relationship("Comment", back_populates="user") 
+    comments = relationship("Comment", back_populates="user")
+    experiences = relationship("Experience", back_populates="user", cascade="all, delete-orphan") 
