@@ -5,7 +5,8 @@ from models.user import User
 from schemas.user import (
     UserCreate, User as UserSchema, UserLogin, Token,
     EmailVerificationRequest, EmailVerificationResponse,
-    EmailVerificationCode, UserCreateWithVerification
+    EmailVerificationCode, UserCreateWithVerification,
+    UserIdCheckRequest, UserIdCheckResponse
 )
 from utils.auth import get_password_hash, verify_password, create_access_token
 from utils.email_auth import (
@@ -20,6 +21,29 @@ from jose import jwt, JWTError
 
 router = APIRouter(prefix="/users", tags=["users"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+@router.post("/check-userid", response_model=UserIdCheckResponse)
+def check_user_id_availability(request: UserIdCheckRequest, db: Session = Depends(get_db)):
+    """사용자 ID 중복 검사"""
+    try:
+        # 사용자 ID 중복 확인
+        db_user = db.query(User).filter(User.user_id == request.user_id).first()
+        
+        if db_user:
+            return UserIdCheckResponse(
+                available=False,
+                message=f"사용자 ID '{request.user_id}'는 이미 사용 중입니다."
+            )
+        else:
+            return UserIdCheckResponse(
+                available=True,
+                message=f"사용자 ID '{request.user_id}'는 사용 가능합니다."
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 @router.post("/send-verification", response_model=EmailVerificationResponse)
 def send_email_verification(request: EmailVerificationRequest, db: Session = Depends(get_db)):

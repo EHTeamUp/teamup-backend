@@ -35,6 +35,21 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     user_id: Optional[str] = None
 
+# ID Duplication Check schemas
+class UserIdCheckRequest(BaseModel):
+    user_id: str = Field(
+        example="teamup_user",
+        description="중복 검사할 사용자 ID"
+    )
+
+class UserIdCheckResponse(BaseModel):
+    available: bool = Field(
+        description="사용 가능 여부 (true: 사용 가능, false: 이미 사용 중)"
+    )
+    message: str = Field(
+        description="중복 검사 결과 메시지"
+    )
+
 # Email Verification schemas
 class EmailVerificationRequest(BaseModel):
     email: EmailStr = Field(
