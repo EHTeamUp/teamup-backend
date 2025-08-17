@@ -21,7 +21,7 @@ class User(UserBase):
 
 class UserLogin(BaseModel):
     user_id: str = Field(example="user123", description="사용자 ID")
-    password: str = Field(example="password123", description="비밀번호")
+    password: str = Field(example="Password12#", description="비밀번호")
 
 class Token(BaseModel):
     access_token: str = Field(example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", description="액세스 토큰")

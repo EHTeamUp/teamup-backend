@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -31,8 +31,8 @@ class ContestTag(Base):
     __tablename__ = "contest_tags"
     
     contest_tag_id = Column(Integer, primary_key=True, autoincrement=True)
-    contest_id = Column(Integer, nullable=False)
-    tag_id = Column(Integer, nullable=False)
+    contest_id = Column(Integer, ForeignKey("contests.contest_id"), nullable=False)
+    tag_id = Column(Integer, ForeignKey("tags.tag_id"), nullable=False)
     
     # Foreign Keys
     contest = relationship("Contest", back_populates="contest_tags")

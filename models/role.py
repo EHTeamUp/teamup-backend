@@ -11,6 +11,7 @@ class Role(Base):
     
     # Relationships
     user_roles = relationship("UserRole", back_populates="role")
+    recruitment_post_roles = relationship("RecruitmentPostRole", back_populates="role")
     
     def __repr__(self):
         return f"<Role(role_id={self.role_id}, name='{self.name}', is_custom={self.is_custom})>"
