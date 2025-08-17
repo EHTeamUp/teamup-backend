@@ -57,6 +57,7 @@ app.include_router(registration.router, prefix="/api/v1")
 app.include_router(profile.router, prefix="/api/v1")
 app.include_router(contests.router, prefix="/api/v1")
 app.include_router(personality.router, prefix="/api/v1")
+
 # app.include_router(teams.router, prefix="/api/v1")
 # app.include_router(projects.router, prefix="/api/v1")
 

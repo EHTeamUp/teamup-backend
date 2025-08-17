@@ -11,7 +11,6 @@ class Skill(Base):
     
     # Relationships
     user_skills = relationship("UserSkill", back_populates="skill")
-    recruitment_post_skills = relationship("RecruitmentPostSkill", back_populates="skill")
     
     def __repr__(self):
         return f"<Skill(skill_id={self.skill_id}, name='{self.name}', is_custom={self.is_custom})>" 
