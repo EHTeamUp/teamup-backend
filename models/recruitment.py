@@ -15,6 +15,9 @@ class RecruitmentPost(Base):
     recruitment_post_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(50), ForeignKey("users.user_id"), nullable=False)  # 작성자
     contest_id = Column(Integer, ForeignKey("contests.contest_id"), nullable=False)
+    title = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    recruitment_count = Column(Integer, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     
     # Foreign Keys
@@ -33,6 +36,7 @@ class Application(Base):
     application_id = Column(Integer, primary_key=True, autoincrement=True)
     recruitment_post_id = Column(Integer, ForeignKey("recruitment_posts.recruitment_post_id"), nullable=False)
     user_id = Column(String(50), ForeignKey("users.user_id"), nullable=False)
+    message = Column(Text, nullable=False)
     status = Column(Enum(ApplicationStatus), default=ApplicationStatus.pending)
     
     # Foreign Keys
@@ -67,9 +71,11 @@ class Comment(Base):
     comment_id = Column(Integer, primary_key=True, autoincrement=True)
     recruitment_post_id = Column(Integer, ForeignKey("recruitment_posts.recruitment_post_id"), nullable=False)
     user_id = Column(String(50), ForeignKey("users.user_id"), nullable=False)
+    parent_comment_id = Column(Integer, ForeignKey("comments.comment_id"), nullable=True)  # 최상위는 null
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     
     # Foreign Keys
     recruitment_post = relationship("RecruitmentPost", back_populates="comments")
-    user = relationship("User", back_populates="comments") 
+    user = relationship("User", back_populates="comments")
+    parent_comment = relationship("Comment", remote_side=[comment_id]) 

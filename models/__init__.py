@@ -14,7 +14,7 @@ from .experience import Experience
 from .personality import Personality, Question, Answer, UserPersonalityScore
 
 # Contest models
-from .contest import Contest, Tag, ContestTag
+from .contest import Contest, Tag, ContestTag, Filter, ContestFilter
 
 # Recruitment models
 from .recruitment import (
@@ -37,7 +37,7 @@ __all__ = [
     "Personality", "Question", "Answer", "UserPersonalityScore",
     
     # Contest
-    "Contest", "Tag", "ContestTag",
+    "Contest", "Tag", "ContestTag", "Filter", "ContestFilter",
     
     # Recruitment
     "RecruitmentPost", "Application", "ApplicationStatus",
