@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teamup"
+version = "1.0.0"
+description = "팀 프로젝트 매칭 플랫폼"
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+authors = [
+    {name = "TeamUp Team"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+dependencies = [
+    "fastapi==0.116.1",
+    "uvicorn[standard]==0.35.0",
+    "sqlalchemy==2.0.27",
+    "pymysql==1.1.0",
+    "python-dotenv==1.1.1",
+    "pydantic==2.11.7",
+    "python-multipart==0.0.9",
+    "cryptography==42.0.8",
+    "bcrypt==4.1.2",
+    "python-jose[cryptography]==3.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black>=22.0",
+    "flake8>=4.0",
+]
+
+[tool.setuptools]
+packages = ["models", "routers", "schemas", "utils"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']

@@ -49,9 +49,35 @@ TeamUp/
 
 ## 🚀 빠른 시작
 
+### 0. Python 버전 확인
+이 프로젝트는 **Python 3.9 ~ 3.12**를 요구합니다.
+
+⚠️ **주의**: Python 3.13은 현재 일부 패키지와 호환성 문제가 있어 지원하지 않습니다.
+
+**pyenv 사용자:**
+```bash
+# .python-version 파일이 자동으로 Python 버전을 설정합니다
+pyenv install 3.12.6  # 필요한 경우
+pyenv local 3.12.6    # 프로젝트 디렉토리에서
+```
+
+**직접 설치:**
+```bash
+# Windows: python.org에서 다운로드
+# macOS: brew install python@3.12
+# Linux: sudo apt install python3.12
+```
+
 ### 1. 의존성 설치
+
+**방법 1: requirements.txt 사용 (권장)**
 ```bash
 pip install -r requirements.txt
+```
+
+**방법 2: 프로젝트 설치 (Python 버전 자동 검증)**
+```bash
+pip install -e .
 ```
 
 ### 2. 환경 변수 설정
