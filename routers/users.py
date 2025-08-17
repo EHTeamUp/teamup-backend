@@ -105,7 +105,7 @@ def update_user_profile(
             if len(profile_update.new_password) < 6:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="새 비밀번호는 최소 6자 이상이어야 합니다."
+                    detail="새 비밀번호는 최소 8자 이상이어야 합니다."
                 )
             current_user.password_hash = get_password_hash(profile_update.new_password)
         

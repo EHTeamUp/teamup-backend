@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, AnyUrl
 from typing import List
 from datetime import date
 
@@ -14,7 +14,7 @@ class Tag(BaseModel):
 class Contest(BaseModel):
     contest_id: int = Field(example=1, description="공모전 ID")
     name: str = Field(example="2024 대학생 소프트웨어 경진대회", description="공모전명")
-    poster_img_url: HttpUrl = Field(example="https://example.com/poster.jpg", description="포스터 이미지 URL")
+    poster_img_url: str = Field(example="https://example.com/poster.jpg", description="포스터 이미지 URL")
     due_date: date = Field(example="2024-12-31", description="마감일")
     tags: List[Tag] = Field(example=[], description="연결된 태그들")
     
