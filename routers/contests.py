@@ -15,10 +15,23 @@ def get_contests(db: Session = Depends(get_db)):
         # 전체 공모전 수 조회
         total_count = db.query(func.count(Contest.contest_id)).scalar()
         
-        # 공모전 목록 조회 (마감일 기준 오름차순)
+        # 공모전 목록 조회 (마감일 기준 오름차순) - 태그 정보 포함
         contests = db.query(Contest)\
+            .outerjoin(ContestTag, Contest.contest_id == ContestTag.contest_id)\
+            .outerjoin(Tag, ContestTag.tag_id == Tag.tag_id)\
             .order_by(Contest.due_date.asc())\
             .all()
+        
+        # 각 공모전에 태그 정보 추가
+        for contest in contests:
+            contest.tags = []
+            contest_tags = db.query(ContestTag, Tag)\
+                .join(Tag, ContestTag.tag_id == Tag.tag_id)\
+                .filter(ContestTag.contest_id == contest.contest_id)\
+                .all()
+            
+            for contest_tag, tag in contest_tags:
+                contest.tags.append(tag)
         
         return ContestListResponse(
             contests=contests,

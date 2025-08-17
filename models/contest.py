@@ -12,12 +12,22 @@ class Contest(Base):
     poster_img_url = Column(String(500), nullable=False)
     start_date = Column(Date, nullable=False)
     due_date = Column(Date, nullable=False)
-    prize = Column(Integer, nullable=False)
     
     # Relationships
     contest_tags = relationship("ContestTag", back_populates="contest")
     contest_filters = relationship("ContestFilter", back_populates="contest")
     recruitment_posts = relationship("RecruitmentPost", back_populates="contest")
+    
+    # 가상 속성으로 tags 접근
+    @property
+    def tags(self):
+        if hasattr(self, '_tags'):
+            return self._tags
+        return []
+    
+    @tags.setter
+    def tags(self, value):
+        self._tags = value
 
 class Tag(Base):
     __tablename__ = "tags"
