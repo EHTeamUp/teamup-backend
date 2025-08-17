@@ -12,7 +12,6 @@ class Contest(Base):
     poster_img_url = Column(String(500), nullable=False)
     start_date = Column(Date, nullable=False)
     due_date = Column(Date, nullable=False)
-    prize = Column(Integer, nullable=False)
     
     # Relationships
     contest_tags = relationship("ContestTag", back_populates="contest")

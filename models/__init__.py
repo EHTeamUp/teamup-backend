@@ -18,8 +18,7 @@ from .contest import Contest, Tag, ContestTag, Filter, ContestFilter
 
 # Recruitment models
 from .recruitment import (
-    RecruitmentPost, Application, ApplicationStatus,
-    RecruitmentPostSkill, RecruitmentPostRole, Comment
+    RecruitmentPost, Application, ApplicationStatus, Comment
 )
 
 # Export all models
@@ -40,6 +39,5 @@ __all__ = [
     "Contest", "Tag", "ContestTag", "Filter", "ContestFilter",
     
     # Recruitment
-    "RecruitmentPost", "Application", "ApplicationStatus",
-    "RecruitmentPostSkill", "RecruitmentPostRole", "Comment"
+    "RecruitmentPost", "Application", "ApplicationStatus", "Comment"
 ] 

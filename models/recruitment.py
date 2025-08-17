@@ -26,8 +26,6 @@ class RecruitmentPost(Base):
     
     # Relationships
     applications = relationship("Application", back_populates="recruitment_post")
-    recruitment_post_skills = relationship("RecruitmentPostSkill", back_populates="recruitment_post")
-    recruitment_post_roles = relationship("RecruitmentPostRole", back_populates="recruitment_post")
     comments = relationship("Comment", back_populates="recruitment_post")
 
 class Application(Base):
@@ -42,28 +40,6 @@ class Application(Base):
     # Foreign Keys
     recruitment_post = relationship("RecruitmentPost", back_populates="applications")
     user = relationship("User", back_populates="applications")
-
-class RecruitmentPostSkill(Base):
-    __tablename__ = "recruitment_post_skills"
-    
-    recruitment_post_skill_id = Column(Integer, primary_key=True, autoincrement=True)
-    recruitment_post_id = Column(Integer, ForeignKey("recruitment_posts.recruitment_post_id"), nullable=False)
-    skill_id = Column(Integer, ForeignKey("skills.skill_id"), nullable=False)
-    
-    # Foreign Keys
-    recruitment_post = relationship("RecruitmentPost", back_populates="recruitment_post_skills")
-    skill = relationship("Skill", back_populates="recruitment_post_skills")
-
-class RecruitmentPostRole(Base):
-    __tablename__ = "recruitment_post_roles"
-    
-    recruitment_post_role_id = Column(Integer, primary_key=True, autoincrement=True)
-    recruitment_post_id = Column(Integer, ForeignKey("recruitment_posts.recruitment_post_id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.role_id"), nullable=False)
-    
-    # Foreign Keys
-    recruitment_post = relationship("RecruitmentPost", back_populates="recruitment_post_roles")
-    role = relationship("Role", back_populates="recruitment_post_roles")
 
 class Comment(Base):
     __tablename__ = "comments"
