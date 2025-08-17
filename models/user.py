@@ -19,4 +19,8 @@ class User(Base):
     recruitment_posts = relationship("RecruitmentPost", back_populates="user")
     applications = relationship("Application", back_populates="user")
     comments = relationship("Comment", back_populates="user")
-    experiences = relationship("Experience", back_populates="user", cascade="all, delete-orphan") 
+    experiences = relationship("Experience", back_populates="user", cascade="all, delete-orphan")
+    
+    # 성향 테스트 관련 관계
+    test_sessions = relationship("UserTestSession", back_populates="user")
+    trait_profiles = relationship("UserTraitProfile", back_populates="user") 
