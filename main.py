@@ -8,12 +8,23 @@ from routers import users, registration
 from routers import profile, contests
 
 # 데이터베이스 테이블 생성 (MySQL 연결이 가능할 때만)
-try:
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully")
-except Exception as e:
-    print(f"⚠️ Database connection failed: {e}")
-    print("📝 Please make sure MySQL server is running and database is configured")
+def init_database():
+    try:
+        if engine:
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database tables created successfully")
+            return True
+        else:
+            print("⚠️ Database engine not available")
+            return False
+    except Exception as e:
+        print(f"⚠️ Database connection failed: {e}")
+        print("📝 Please make sure MySQL server is running and database is configured")
+        print("📝 You can still use the API without database functionality")
+        return False
+
+# 데이터베이스 초기화 시도 (실패해도 앱은 계속 실행)
+database_initialized = init_database()
 
 # FastAPI 앱 객체 생성
 app = FastAPI(
