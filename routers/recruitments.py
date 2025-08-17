@@ -165,3 +165,17 @@ def check_post_author(
         "post_user_id": recruitment_post.user_id,
         "request_user_id": user_id
     }
+
+@router.get("/user/{user_id}/written", response_model=List[RecruitmentPostList])
+def get_written_posts_by_user(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    특정 사용자가 작성한 게시글 목록 조회
+    """
+    recruitment_posts = db.query(RecruitmentPost).filter(
+        RecruitmentPost.user_id == user_id
+    ).all()
+    
+    return recruitment_posts
