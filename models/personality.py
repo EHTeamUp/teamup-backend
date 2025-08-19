@@ -89,3 +89,18 @@ class UserTraitProfile(Base):
     
     def __repr__(self):
         return f"<UserTraitProfile(user_id='{self.user_id}', profile_code='{self.profile_code}')>"
+
+class ProfileRule(Base):
+    """프로필 규칙"""
+    __tablename__ = "profile_rules"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    profile_code = Column(String(100), nullable=False, unique=True)
+    display_name = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=False)
+    required_tags_json = Column(JSON, nullable=False)
+    priority = Column(Integer, nullable=False, default=100)
+    created_at = Column(DateTime, server_default=func.now())
+    
+    def __repr__(self):
+        return f"<ProfileRule(profile_code='{self.profile_code}', display_name='{self.display_name}')>"
