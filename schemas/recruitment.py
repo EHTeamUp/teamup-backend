@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional, List, TypedDict
 from datetime import datetime
 from models.recruitment import ApplicationStatus
@@ -90,3 +90,47 @@ class UserActivityResponse(BaseModel):
     """사용자의 작성 게시글과 지원 목록을 함께 반환하는 스키마"""
     written_posts: List[UserActivityPost]
     accepted_applications: List[UserActivityApplication]
+
+# Comment Schemas
+class CommentBase(BaseModel):
+    content: str
+
+class CommentCreate(CommentBase):
+    recruitment_post_id: int
+    user_id: str
+    parent_comment_id: Optional[int] = None
+    
+    @validator('parent_comment_id', pre=True, always=True)
+    def validate_parent_comment_id(cls, v):
+        """parent_comment_id가 0이거나 None인 경우 None으로 변환"""
+        if v is None or v == 0 or v == "0":
+            return None
+        return v
+
+class ReplyCreate(CommentBase):
+    """대댓글 작성용 스키마 - recruitment_post_id 없음"""
+    user_id: str
+    parent_comment_id: int
+
+class CommentUpdate(CommentBase):
+    pass
+
+class CommentResponse(CommentBase):
+    comment_id: int
+    recruitment_post_id: int
+    user_id: str
+    parent_comment_id: Optional[int] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class CommentWithReplies(CommentResponse):
+    """대댓글이 포함된 댓글 스키마"""
+    replies: List['CommentResponse'] = []
+    
+    class Config:
+        from_attributes = True
+
+# 순환 참조 해결을 위한 업데이트
+CommentWithReplies.model_rebuild()
