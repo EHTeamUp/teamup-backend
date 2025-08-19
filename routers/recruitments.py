@@ -70,17 +70,32 @@ def get_recruitment_post(
     """
     특정 모집 게시글 조회
     """
-    recruitment_post = db.query(RecruitmentPost).filter(
-        RecruitmentPost.recruitment_post_id == recruitment_post_id
-    ).first()
+    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
+    result = db.query(RecruitmentPost, Contest.due_date).join(
+        Contest, RecruitmentPost.contest_id == Contest.contest_id
+    ).filter(RecruitmentPost.recruitment_post_id == recruitment_post_id).first()
     
-    if not recruitment_post:
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="게시글을 찾을 수 없습니다."
         )
     
-    return recruitment_post
+    post, due_date = result
+    
+    # 결과를 RecruitmentPostResponse 형태로 변환
+    post_dict = {
+        "recruitment_post_id": post.recruitment_post_id,
+        "title": post.title,
+        "content": post.content,
+        "recruitment_count": post.recruitment_count,
+        "contest_id": post.contest_id,
+        "user_id": post.user_id,
+        "created_at": post.created_at,
+        "due_date": due_date
+    }
+    
+    return RecruitmentPostResponse(**post_dict)
 
 @router.put("/update/{recruitment_post_id}", response_model=RecruitmentPostResponse)
 def update_recruitment_post(

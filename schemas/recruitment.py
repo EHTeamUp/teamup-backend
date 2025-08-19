@@ -20,10 +20,15 @@ class RecruitmentPostUpdate(BaseModel):
     contest_id: Optional[int] = None
     user_id: str
 
-class RecruitmentPostResponse(RecruitmentPostBase):
+class RecruitmentPostResponse(BaseModel):
     recruitment_post_id: int
+    title: str
+    content: str
+    recruitment_count: int
+    contest_id: int
     user_id: str
     created_at: datetime
+    due_date: Optional[date] = None
     
     class Config:
         from_attributes = True
