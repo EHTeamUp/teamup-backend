@@ -1,6 +1,6 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List, TypedDict
-from datetime import datetime
+from datetime import datetime, date
 from models.recruitment import ApplicationStatus
 
 # Recruitment Post Schemas
@@ -36,6 +36,7 @@ class RecruitmentPostList(BaseModel):
     contest_id: int
     user_id: str
     created_at: datetime
+    due_date: Optional[date] = None
     
     class Config:
         from_attributes = True

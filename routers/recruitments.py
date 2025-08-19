@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from typing import List
 from database import get_db
 from models.recruitment import RecruitmentPost
+from models.contest import Contest
 from models.user import User
 from schemas.recruitment import RecruitmentPostCreate, RecruitmentPostResponse, RecruitmentPostUpdate, RecruitmentPostList
 from utils.auth import get_current_user
@@ -38,8 +40,27 @@ def get_recruitment_posts(
     """
     모든 모집 게시글 목록 조회 (페이징 없음)
     """
-    recruitment_posts = db.query(RecruitmentPost).all()
-    return recruitment_posts
+    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+        Contest, RecruitmentPost.contest_id == Contest.contest_id
+    ).all()
+    
+    # 결과를 RecruitmentPostList 형태로 변환
+    result = []
+    for post, due_date in recruitment_posts:
+        post_dict = {
+            "recruitment_post_id": post.recruitment_post_id,
+            "title": post.title,
+            "content": post.content,
+            "recruitment_count": post.recruitment_count,
+            "contest_id": post.contest_id,
+            "user_id": post.user_id,
+            "created_at": post.created_at,
+            "due_date": due_date
+        }
+        result.append(RecruitmentPostList(**post_dict))
+    
+    return result
 
 @router.get("/{recruitment_post_id}", response_model=RecruitmentPostResponse)
 def get_recruitment_post(
@@ -133,11 +154,27 @@ def get_recruitment_posts_by_contest(
     """
     특정 콘테스트 모집 게시글 목록 조회
     """
-    recruitment_posts = db.query(RecruitmentPost).filter(
-        RecruitmentPost.contest_id == contest_id
-    ).all()
+    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+        Contest, RecruitmentPost.contest_id == Contest.contest_id
+    ).filter(RecruitmentPost.contest_id == contest_id).all()
     
-    return recruitment_posts
+    # 결과를 RecruitmentPostList 형태로 변환
+    result = []
+    for post, due_date in recruitment_posts:
+        post_dict = {
+            "recruitment_post_id": post.recruitment_post_id,
+            "title": post.title,
+            "content": post.content,
+            "recruitment_count": post.recruitment_count,
+            "contest_id": post.contest_id,
+            "user_id": post.user_id,
+            "created_at": post.created_at,
+            "due_date": due_date
+        }
+        result.append(RecruitmentPostList(**post_dict))
+    
+    return result
 
 @router.get("/check-author/{recruitment_post_id}")
 def check_post_author(
@@ -174,8 +211,24 @@ def get_written_posts_by_user(
     """
     특정 사용자가 작성한 게시글 목록 조회
     """
-    recruitment_posts = db.query(RecruitmentPost).filter(
-        RecruitmentPost.user_id == user_id
-    ).all()
+    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+        Contest, RecruitmentPost.contest_id == Contest.contest_id
+    ).filter(RecruitmentPost.user_id == user_id).all()
     
-    return recruitment_posts
+    # 결과를 RecruitmentPostList 형태로 변환
+    result = []
+    for post, due_date in recruitment_posts:
+        post_dict = {
+            "recruitment_post_id": post.recruitment_post_id,
+            "title": post.title,
+            "content": post.content,
+            "recruitment_count": post.recruitment_count,
+            "contest_id": post.contest_id,
+            "user_id": post.user_id,
+            "created_at": post.created_at,
+            "due_date": due_date
+        }
+        result.append(RecruitmentPostList(**post_dict))
+    
+    return result
