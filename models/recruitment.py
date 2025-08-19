@@ -54,4 +54,11 @@ class Comment(Base):
     # Foreign Keys
     recruitment_post = relationship("RecruitmentPost", back_populates="comments")
     user = relationship("User", back_populates="comments")
-    parent_comment = relationship("Comment", remote_side=[comment_id]) 
+    parent_comment = relationship("Comment", remote_side=[comment_id])
+    replies = relationship("Comment", back_populates="parent_comment")
+    
+    def __init__(self, **kwargs):
+        # parent_comment_id가 0이면 None으로 변환
+        if 'parent_comment_id' in kwargs and kwargs['parent_comment_id'] == 0:
+            kwargs['parent_comment_id'] = None
+        super().__init__(**kwargs) 

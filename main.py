@@ -5,7 +5,7 @@ from config import settings
 # Import all models to ensure they are registered with SQLAlchemy
 from models import *
 from routers import users, registration
-from routers import profile, contests, recruitments, applications
+from routers import profile, contests, recruitments, applications, comments
 
 # 데이터베이스 테이블 생성 (MySQL 연결이 가능할 때만)
 def init_database():
@@ -58,6 +58,7 @@ app.include_router(profile.router, prefix="/api/v1")
 app.include_router(contests.router, prefix="/api/v1")
 app.include_router(recruitments.router, prefix="/api/v1")
 app.include_router(applications.router, prefix="/api/v1")
+app.include_router(comments.router, prefix="/api/v1")
 
 # app.include_router(teams.router, prefix="/api/v1")
 # app.include_router(projects.router, prefix="/api/v1")
