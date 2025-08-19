@@ -11,7 +11,7 @@ from .user_role import UserRole
 from .experience import Experience
 
 # Personality test models
-from .personality import Question, Option, UserTestSession, UserAnswer, UserTraitProfile
+from .personality import Question, Option, UserTraitProfile, ProfileRule
 
 # Contest models
 from .contest import Contest, Tag, ContestTag, Filter, ContestFilter
@@ -33,7 +33,7 @@ __all__ = [
     "Experience",
     
     # Personality
-    "Question", "Option", "UserTestSession", "UserAnswer", "UserTraitProfile",
+    "Question", "Option", "UserTraitProfile", "ProfileRule",
     
     # Contest
     "Contest", "Tag", "ContestTag", "Filter", "ContestFilter",

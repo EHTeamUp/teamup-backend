@@ -3,10 +3,19 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
 from models.personality import (
-    Question, Option, UserTestSession, UserAnswer, UserTraitProfile
+    Question as QuestionModel, 
+    Option as OptionModel, 
+    UserTraitProfile as UserTraitProfileModel, 
+    ProfileRule as ProfileRuleModel
 )
-from schemas.personality import *
+from schemas.personality import (
+    QuestionListResponse, 
+    SubmitTestRequest, 
+    TestResultResponse, 
+    TraitProfile
+)
 from typing import List
+import json
 
 router = APIRouter(prefix="/personality", tags=["personality"])
 
@@ -14,95 +23,85 @@ router = APIRouter(prefix="/personality", tags=["personality"])
 def get_questions(db: Session = Depends(get_db)):
     """모든 질문과 보기 조회"""
     try:
-        questions = db.query(Question)\
-            .order_by(Question.order_no)\
+        questions = db.query(QuestionModel)\
+            .order_by(QuestionModel.order_no)\
             .all()
+        
+        print(f"DEBUG: Found {len(questions)} questions")
         
         # 각 질문에 보기 추가
         for question in questions:
-            question.options = db.query(Option)\
-                .filter(Option.question_id == question.id)\
-                .order_by(Option.order_no)\
+            print(f"DEBUG: Question {question.id} ({question.key_name}): {question.text}")
+            
+            options = db.query(OptionModel)\
+                .filter(OptionModel.question_id == question.id)\
+                .order_by(OptionModel.order_no)\
                 .all()
+            
+            print(f"DEBUG: Found {len(options)} options for question {question.id}")
+            
+            question.options = options
         
         return QuestionListResponse(
             questions=questions,
             total_count=len(questions)
         )
     except Exception as e:
+        print(f"DEBUG: Error in get_questions: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
 
-@router.post("/start-test", response_model=TestSession)
-def start_personality_test(request: StartTestRequest, db: Session = Depends(get_db)):
-    """성향 테스트 시작"""
-    try:
-        # 테스트 세션 생성 (user_id는 인증에서 가져와야 함)
-        # TODO: 실제 구현 시 current_user에서 user_id 가져오기
-        test_session = UserTestSession(
-            user_id="temp_user"  # 임시 값
-        )
-        
-        db.add(test_session)
-        db.commit()
-        db.refresh(test_session)
-        
-        return test_session
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
-        )
-
-@router.post("/submit-test", response_model=TestResultResponse)
+@router.post("/test", response_model=TestResultResponse)
 def submit_personality_test(request: SubmitTestRequest, db: Session = Depends(get_db)):
     """성향 테스트 제출 및 결과 계산"""
     try:
-        # 세션 확인
-        session = db.query(UserTestSession)\
-            .filter(UserTestSession.id == request.session_id)\
-            .first()
+        # 답변에서 trait_tag 추출
+        traits = {}
+        for answer in request.answers:
+            option = db.query(OptionModel).filter(OptionModel.id == answer.option_id).first()
+            if not option:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid option_id: {answer.option_id}"
+                )
+            
+            question = db.query(QuestionModel).filter(QuestionModel.id == answer.question_id).first()
+            if not question:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid question_id: {answer.question_id}"
+                )
+            
+            traits[question.key_name] = option.trait_tag
         
-        if not session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Test session not found"
-            )
-        
-        if session.finished_at:
+        # ProfileRule과 매칭하여 성향 결정
+        profile_rule = find_matching_profile(traits, db)
+        if not profile_rule:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Test session already completed"
+                detail="No matching personality profile found"
             )
         
-        # 답변 저장
-        for answer_data in request.answers:
-            answer = UserAnswer(
-                session_id=request.session_id,
-                question_id=answer_data.question_id,
-                option_id=answer_data.option_id
-            )
-            db.add(answer)
+        # UserTraitProfile 저장
+        trait_profile = UserTraitProfileModel(
+            user_id=request.user_id,
+            profile_code=profile_rule.profile_code,
+            traits_json=traits
+        )
         
-        # 세션 완료 처리
-        session.finished_at = func.now()
-        
-        # 성향 프로필 계산 및 저장
-        profile = calculate_trait_profile(request.session_id, db)
-        
+        db.add(trait_profile)
         db.commit()
+        db.refresh(trait_profile)
         
         # 결과 응답
         return TestResultResponse(
-            session_id=request.session_id,
-            profile_code=profile.profile_code,
-            traits=profile.traits_json,
-            completed_at=session.finished_at,
-            total_questions=len(request.answers),
-            answered_questions=len(request.answers)
+            profile_code=profile_rule.profile_code,
+            display_name=profile_rule.display_name,
+            description=profile_rule.description,
+            traits=traits,
+            completed_at=trait_profile.created_at
         )
         
     except HTTPException:
@@ -114,62 +113,47 @@ def submit_personality_test(request: SubmitTestRequest, db: Session = Depends(ge
             detail=f"Internal server error: {str(e)}"
         )
 
-def calculate_trait_profile(session_id: int, db: Session) -> UserTraitProfile:
-    """성향 프로필 계산"""
-    # 사용자 답변 조회
-    answers = db.query(UserAnswer)\
-        .filter(UserAnswer.session_id == session_id)\
-        .all()
+def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
+    """사용자 답변과 ProfileRule을 매칭하여 최적의 성향 찾기"""
+    # 모든 ProfileRule 조회
+    profile_rules = db.query(ProfileRuleModel).all()
     
-    # 성향 특성 계산
-    traits = {}
-    for answer in answers:
-        option = db.query(Option).filter(Option.id == answer.option_id).first()
-        if option:
-            traits[option.question.key_name] = option.trait_tag
+    best_match = None
+    best_score = -1
     
-    # 프로필 코드 생성
-    profile_code = generate_profile_code(traits)
+    for rule in profile_rules:
+        required_tags = rule.required_tags_json
+        
+        # 정확히 일치하는 태그 개수 계산
+        match_count = 0
+        for tag in required_tags:
+            if tag in traits.values():
+                match_count += 1
+        
+        # 모든 태그가 일치하는 경우만 고려
+        if match_count == len(required_tags):
+            # priority가 낮을수록 우선순위가 높음
+            score = 1000 - rule.priority + match_count
+            
+            if score > best_score:
+                best_score = score
+                best_match = rule
     
-    # 프로필 저장
-    profile = UserTraitProfile(
-        session_id=session_id,
-        user_id=answers[0].session.user_id if answers else "unknown",
-        profile_code=profile_code,
-        traits_json=traits
-    )
-    
-    db.add(profile)
-    return profile
+    return best_match
 
-def generate_profile_code(traits: dict) -> str:
-    """성향 특성을 기반으로 프로필 코드 생성"""
-    if not traits:
-        return "UNKNOWN"
-    
-    # 예시: LEADER + MORNING = "MORNING_LEADER"
-    role = traits.get('role', 'UNKNOWN')
-    time = traits.get('time', 'UNKNOWN')
-    
-    if role != 'UNKNOWN' and time != 'UNKNOWN':
-        return f"{time}_{role}"
-    elif role != 'UNKNOWN':
-        return role
-    else:
-        return "UNKNOWN"
-
-@router.get("/results/{session_id}", response_model=TraitProfile)
-def get_test_result(session_id: int, db: Session = Depends(get_db)):
-    """테스트 결과 조회"""
+@router.get("/user-profile/{user_id}", response_model=TraitProfile)
+def get_user_profile(user_id: str, db: Session = Depends(get_db)):
+    """사용자 성향 프로필 조회 (최신 결과)"""
     try:
-        profile = db.query(UserTraitProfile)\
-            .filter(UserTraitProfile.session_id == session_id)\
+        profile = db.query(UserTraitProfileModel)\
+            .filter(UserTraitProfileModel.user_id == user_id)\
+            .order_by(UserTraitProfileModel.created_at.desc())\
             .first()
         
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Test result not found"
+                detail="User profile not found"
             )
         
         return profile
