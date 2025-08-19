@@ -65,6 +65,8 @@ class ApplicationResponse(ApplicationBase):
     class Config:
         from_attributes = True
 
+
+
 class ApplicationStatusUpdate(BaseModel):
     user_ids: List[str]
     recruitment_post_id: int

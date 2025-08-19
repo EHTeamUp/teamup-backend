@@ -106,10 +106,11 @@ def get_applications_by_post(
     db: Session = Depends(get_db)
 ):
     """
-    특정 게시글의 모든 지원 목록 조회 - 지원자 목록
+    특정 게시글의 모든 지원 목록 조회 - 지원자 목록 (accepted, pending만)
     """
     applications = db.query(Application).filter(
-        Application.recruitment_post_id == recruitment_post_id
+        Application.recruitment_post_id == recruitment_post_id,
+        Application.status.in_([ApplicationStatus.accepted, ApplicationStatus.pending])
     ).all()
     
     return applications
