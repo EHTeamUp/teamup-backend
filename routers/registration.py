@@ -7,13 +7,19 @@ from models.role import Role
 from models.user_skill import UserSkill
 from models.user_role import UserRole
 from models.experience import Experience
+from models.personality import (
+    Question as QuestionModel, 
+    Option as OptionModel, 
+    UserTraitProfile as UserTraitProfileModel, 
+    ProfileRule as ProfileRuleModel
+)
 from schemas.registration import (
     RegistrationStep1, RegistrationStep2, RegistrationStep3, RegistrationStep4,
     CompleteRegistration, RegistrationStatus, StepResponse
 )
 from schemas.user import (
     EmailVerificationRequest, EmailVerificationResponse, EmailVerificationCode,
-    UserCreateWithVerification, UserIdCheckRequest, UserIdCheckResponse
+    UserIdCheckRequest, UserIdCheckResponse, UserCreateWithVerification
 )
 from utils.auth import get_password_hash, create_access_token
 from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified
@@ -25,6 +31,34 @@ router = APIRouter(prefix="/registration", tags=["registration"])
 
 # 메모리 기반 회원가입 진행 상태 저장 
 registration_sessions = {}
+
+def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
+    """사용자 답변과 ProfileRule을 매칭하여 최적의 성향 찾기"""
+    # 모든 ProfileRule 조회
+    profile_rules = db.query(ProfileRuleModel).all()
+    
+    best_match = None
+    best_score = -1
+    
+    for rule in profile_rules:
+        required_tags = rule.required_tags_json
+        
+        # 정확히 일치하는 태그 개수 계산
+        match_count = 0
+        for tag in required_tags:
+            if tag in traits.values():
+                match_count += 1
+        
+        # 모든 태그가 일치하는 경우만 고려
+        if match_count == len(required_tags):
+            # priority가 낮을수록 우선순위가 높음
+            score = 1000 - rule.priority + match_count
+            
+            if score > best_score:
+                best_score = score
+                best_match = rule
+    
+    return best_match
 
 # ===== 회원가입 관련 엔드포인트 =====
 
@@ -379,11 +413,11 @@ def complete_step3(step3: RegistrationStep3, db: Session = Depends(get_db)):
         
         return StepResponse(
             success=True,
-            message="3단계가 완료되었습니다. 성향테스트를 진행하거나 건너뛸 수 있습니다.",
+            message="3단계가 완료되었습니다. 성향테스트를 진행해주세요.",
             current_step=3,
             next_step=4,
             is_completed=False,
-            can_skip_personality=True
+            can_skip_personality=False
         )
         
     except HTTPException:
@@ -396,7 +430,7 @@ def complete_step3(step3: RegistrationStep3, db: Session = Depends(get_db)):
 
 @router.post("/step4", response_model=StepResponse)
 def complete_step4(step4: RegistrationStep4, db: Session = Depends(get_db)):
-    """4단계: 성향테스트 (선택사항) 완료"""
+    """4단계: 성향테스트 (필수) 완료"""
     try:
         # 1, 2, 3단계 완료 여부 확인
         session = registration_sessions.get(step4.user_id)
@@ -406,27 +440,25 @@ def complete_step4(step4: RegistrationStep4, db: Session = Depends(get_db)):
                 detail="Please complete previous steps first"
             )
         
+        # 성향테스트 답변 검증
+        if len(step4.answers) != 4:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="성향테스트는 4개 질문에 모두 답변해야 합니다."
+            )
+        
         # 4단계 정보 저장
         session["step4"] = step4.dict()
         session["current_step"] = 4
         session["completed_steps"].append(4)
         
-        if step4.skip_personality_test:
-            return StepResponse(
-                success=True,
-                message="성향테스트를 건너뛰었습니다. 회원가입을 완료하시겠습니까?",
-                current_step=4,
-                next_step=None,
-                is_completed=True
-            )
-        else:
-            return StepResponse(
-                success=True,
-                message="성향테스트가 완료되었습니다. 회원가입을 완료하시겠습니까?",
-                current_step=4,
-                next_step=None,
-                is_completed=True
-            )
+        return StepResponse(
+            success=True,
+            message="성향테스트가 완료되었습니다. 회원가입을 완료하시겠습니까?",
+            current_step=4,
+            next_step=None,
+            is_completed=True
+        )
         
     except HTTPException:
         raise
@@ -440,12 +472,12 @@ def complete_step4(step4: RegistrationStep4, db: Session = Depends(get_db)):
 def complete_registration(user_id: str, db: Session = Depends(get_db)):
     """전체 회원가입 완료"""
     try:
-        # 모든 단계 완료 여부 확인
+        # 모든 단계 완료 여부 확인 (이제 4단계까지 필수)
         session = registration_sessions.get(user_id)
-        if not session or session["current_step"] < 3:
+        if not session or session["current_step"] < 4:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Please complete at least first 3 steps first"
+                detail="Please complete all 4 steps including personality test"
             )
         
         # 1단계: 사용자 기본 정보 생성
@@ -525,11 +557,43 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
             )
             db.add(experience)
         
-        # 4단계: 성향테스트 결과 저장 (나중에 구현)
-        # step4_data = session.get("step4")
-        # if step4_data and not step4_data["skip_personality_test"]:
-        #     # 성향테스트 결과 저장 로직
-        #     pass
+        # 4단계: 성향테스트 결과 저장
+        step4_data = session["step4"]
+        if step4_data and "answers" in step4_data:
+            # 답변에서 trait_tag 추출
+            traits = {}
+            for answer in step4_data["answers"]:
+                option = db.query(OptionModel).filter(OptionModel.id == answer["option_id"]).first()
+                if not option:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid option_id: {answer['option_id']}"
+                    )
+                
+                question = db.query(QuestionModel).filter(QuestionModel.id == answer["question_id"]).first()
+                if not question:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid question_id: {answer['question_id']}"
+                    )
+                
+                traits[question.key_name] = option.trait_tag
+            
+            # ProfileRule과 매칭하여 성향 결정
+            profile_rule = find_matching_profile(traits, db)
+            if not profile_rule:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No matching personality profile found"
+                )
+            
+            # UserTraitProfile 저장
+            trait_profile = UserTraitProfileModel(
+                user_id=user_id,
+                profile_code=profile_rule.profile_code,
+                traits_json=traits
+            )
+            db.add(trait_profile)
         
         # 이메일을 인증 완료 상태로 표시
         mark_email_as_verified(step1_data["email"])
@@ -567,15 +631,9 @@ def get_registration_status(user_id: str):
             detail="Registration session not found"
         )
     
-    # 성향테스트 스킵 여부 확인
-    personality_test_skipped = False
-    if session.get("step4"):
-        personality_test_skipped = session["step4"].get("skip_personality_test", False)
-    
     return RegistrationStatus(
         user_id=user_id,
         current_step=session["current_step"],
-        is_completed=session["current_step"] >= 3,  # 3단계 이상이면 완료로 간주
-        completed_steps=session["completed_steps"],
-        personality_test_skipped=personality_test_skipped
+        is_completed=session["current_step"] >= 4,  # 4단계까지 완료해야 함
+        completed_steps=session["completed_steps"]
     )

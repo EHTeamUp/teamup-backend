@@ -56,10 +56,20 @@ class ExperienceInput(BaseModel):
 class RegistrationStep3(BaseModel):
     experiences: List[ExperienceInput] = Field(example=[], description="공모전 수상 경험 목록")
 
-# 4단계: 성향테스트 (선택사항)
+# 4단계: 성향테스트 (필수)
+class PersonalityAnswer(BaseModel):
+    question_id: int = Field(example=1, description="질문 ID")
+    option_id: int = Field(example=1, description="선택한 보기 ID")
+
 class RegistrationStep4(BaseModel):
-    skip_personality_test: bool = Field(example=True, description="성향테스트 건너뛰기 여부")
-    # 나중에 성향테스트 구현 시 여기에 필드 추가
+    answers: List[PersonalityAnswer] = Field(example=[], description="성향테스트 답변 목록")
+    
+    @validator('answers')
+    def validate_answers(cls, v):
+        """성향테스트는 4개 질문에 모두 답변해야 함"""
+        if len(v) != 4:
+            raise ValueError('성향테스트는 4개 질문에 모두 답변해야 합니다.')
+        return v
 
 # 전체 회원가입 정보
 class CompleteRegistration(BaseModel):
@@ -74,7 +84,6 @@ class RegistrationStatus(BaseModel):
     current_step: int = Field(example=1, description="현재 진행 단계 (1, 2, 3, 4)")
     is_completed: bool = Field(example=False, description="회원가입 완료 여부")
     completed_steps: List[int] = Field(example=[1], description="완료된 단계 목록")
-    personality_test_skipped: bool = Field(example=False, description="성향테스트 건너뛰기 여부")
 
 # 단계별 응답
 class StepResponse(BaseModel):
