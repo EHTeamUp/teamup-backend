@@ -16,12 +16,16 @@ class Experience(Base):
     award_name = Column(String(255), nullable=False, comment="수상명 (예: 대상, 최우수상)")
     description = Column(Text, nullable=True, comment="설명 (어떤 작품으로 수상했는지 등)")
     
+    # 필터링을 위한 필드
+    filter_id = Column(Integer, ForeignKey("filters.filter_id", ondelete="CASCADE"), nullable=False, index=True)
+    
     # 메타 정보
     created_at = Column(Date, default=func.current_date())
     updated_at = Column(Date, default=func.current_date(), onupdate=func.current_date())
     
     # Relationships
     user = relationship("User", back_populates="experiences")
+    filter = relationship("Filter", back_populates="experiences")
     
     def __repr__(self):
         return f"<Experience(contest_name='{self.contest_name}', award_name='{self.award_name}')>"

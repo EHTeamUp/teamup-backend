@@ -52,6 +52,7 @@ class ExperienceInput(BaseModel):
     host_organization: Optional[str] = Field(example="한국정보산업연합회", description="주최 기관")
     award_name: str = Field(example="대상", description="수상명 (예: 대상, 최우수상)")
     description: Optional[str] = Field(example="팀 프로젝트 매칭 플랫폼으로 수상", description="설명 (어떤 작품으로 수상했는지 등)")
+    filter_id: int = Field(example=1, description="필터 ID (공모전 카테고리)")
 
 class RegistrationStep3(BaseModel):
     experiences: List[ExperienceInput] = Field(example=[], description="공모전 수상 경험 목록")

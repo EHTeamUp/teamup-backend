@@ -7,6 +7,7 @@ from models.role import Role
 from models.user_skill import UserSkill
 from models.user_role import UserRole
 from models.experience import Experience
+from models.contest import Filter
 from models.personality import (
     Question as QuestionModel, 
     Option as OptionModel, 
@@ -406,6 +407,15 @@ def complete_step3(step3: RegistrationStep3, db: Session = Depends(get_db)):
                 detail="Please complete previous steps first"
             )
         
+        # filter_id 유효성 검사
+        for exp_data in step3.experiences:
+            filter_exists = db.query(Filter).filter(Filter.filter_id == exp_data.filter_id).first()
+            if not filter_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid filter_id: {exp_data.filter_id}"
+                )
+        
         # 3단계 정보 저장
         session["step3"] = step3.dict()
         session["current_step"] = 3
@@ -553,7 +563,8 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
                 award_date=exp_data["award_date"],
                 host_organization=exp_data["host_organization"],
                 award_name=exp_data["award_name"],
-                description=exp_data["description"]
+                description=exp_data["description"],
+                filter_id=exp_data["filter_id"]
             )
             db.add(experience)
         

@@ -7,6 +7,7 @@ from models.role import Role
 from models.user_skill import UserSkill
 from models.user_role import UserRole
 from models.experience import Experience
+from models.contest import Filter
 from schemas.user import (
     SkillUpdate, RoleUpdate, ExperienceUpdate, ExperienceCreate
 )
@@ -213,6 +214,15 @@ def update_user_experiences(
 ):
     """프로필 - 공모전 수상 경험 수정"""
     try:
+        # filter_id 유효성 검사
+        for exp_data in experience_update.experiences:
+            filter_exists = db.query(Filter).filter(Filter.filter_id == exp_data.filter_id).first()
+            if not filter_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid filter_id: {exp_data.filter_id}"
+                )
+        
         # 기존 사용자 경험 삭제
         db.query(Experience).filter(Experience.user_id == current_user.user_id).delete()
         
@@ -224,7 +234,8 @@ def update_user_experiences(
                 award_date=exp_data.award_date,
                 host_organization=exp_data.host_organization,
                 award_name=exp_data.award_name,
-                description=exp_data.description
+                description=exp_data.description,
+                filter_id=exp_data.filter_id
             )
             db.add(experience)
         
@@ -325,7 +336,8 @@ def get_user_experiences(
                 "award_date": exp.award_date,
                 "host_organization": exp.host_organization,
                 "award_name": exp.award_name,
-                "description": exp.description
+                "description": exp.description,
+                "filter_id": exp.filter_id
             }
             for exp in experiences
         ]

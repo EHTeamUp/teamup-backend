@@ -57,6 +57,7 @@ class Filter(Base):
     
     # Relationships
     contest_filters = relationship("ContestFilter", back_populates="filter")
+    experiences = relationship("Experience", back_populates="filter")
 
 class ContestFilter(Base):
     __tablename__ = "contest_filters"
