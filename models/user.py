@@ -11,6 +11,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     is_deleted = Column(Boolean, default=False)  # 0: 활성, 1: 탈퇴
+    fcm_token = Column(String(500), nullable=True)  # FCM 토큰 추가
     
     # Relationships
     user_skills = relationship("UserSkill", back_populates="user")
@@ -21,4 +22,7 @@ class User(Base):
     experiences = relationship("Experience", back_populates="user", cascade="all, delete-orphan")
     
     # 성향 테스트 관련 관계
-    trait_profiles = relationship("UserTraitProfile", back_populates="user") 
+    trait_profiles = relationship("UserTraitProfile", back_populates="user")
+    
+    # 알림 관련 관계
+    notifications = relationship("Notification", back_populates="user") 

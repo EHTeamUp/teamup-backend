@@ -40,7 +40,3 @@ class SynergyResponse(BaseModel):
     users: List[SynergyUser] = Field(
         description="시너지 분석 대상 사용자 목록 (자신 포함)"
     )
-    message: str = Field(
-        example="시너지 분석을 위한 사용자 목록이 준비되었습니다.",
-        description="응답 메시지"
-    )

@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models.recruitment import Comment
+from models.recruitment import Comment, RecruitmentPost
+from models.user import User
 from schemas.recruitment import (
     CommentCreate, 
     CommentResponse, 
@@ -10,6 +11,7 @@ from schemas.recruitment import (
     CommentWithReplies,
     ReplyCreate
 )
+from utils.notification_service import NotificationService
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 
@@ -48,6 +50,39 @@ def create_comment(
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
+    
+    # 알림 전송
+    try:
+        # 게시글 정보 가져오기
+        recruitment_post = db.query(RecruitmentPost).filter(
+            RecruitmentPost.recruitment_post_id == comment.recruitment_post_id
+        ).first()
+        
+        # 댓글 작성자 정보 가져오기
+        comment_user = db.query(User).filter(User.user_id == comment.user_id).first()
+        
+        if recruitment_post and comment_user:
+            if parent_comment_id:
+                # 대댓글인 경우 - 부모 댓글 작성자에게 알림
+                NotificationService.notify_new_reply(
+                    db=db,
+                    parent_comment_user_id=parent_comment.user_id,
+                    reply_user_name=comment_user.name,
+                    recruitment_post_title=recruitment_post.title,
+                    reply_content=comment.content
+                )
+            else:
+                # 일반 댓글인 경우 - 게시글 작성자에게 알림
+                if recruitment_post.user_id != comment.user_id:  # 자신의 게시글에는 알림 안 보내기
+                    NotificationService.notify_new_comment(
+                        db=db,
+                        recruitment_post_user_id=recruitment_post.user_id,
+                        comment_user_name=comment_user.name,
+                        recruitment_post_title=recruitment_post.title,
+                        comment_content=comment.content
+                    )
+    except Exception as e:
+        print(f"Error sending notification: {e}")
     
     return db_comment
 

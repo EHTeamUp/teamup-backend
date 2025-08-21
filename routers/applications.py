@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models.recruitment import Application, ApplicationStatus
+from models.recruitment import Application, ApplicationStatus, RecruitmentPost
+from models.user import User
 from schemas.recruitment import (
     ApplicationCreate, 
     ApplicationResponse, 
@@ -12,6 +13,7 @@ from schemas.recruitment import (
     UserActivityPost,
     UserActivityApplication
 )
+from utils.notification_service import NotificationService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -69,8 +71,22 @@ def accept_applications(
             detail="해당하는 지원을 찾을 수 없습니다."
         )
     
+    # 게시글 정보 가져오기
+    recruitment_post = db.query(RecruitmentPost).filter(
+        RecruitmentPost.recruitment_post_id == status_update.recruitment_post_id
+    ).first()
+    
     for application in applications:
         application.status = ApplicationStatus.accepted
+        
+        # 지원자에게 수락 알림 전송
+        if recruitment_post:
+            NotificationService.notify_application_response(
+                db=db,
+                application_user_id=application.user_id,
+                recruitment_post_title=recruitment_post.title,
+                status="accepted"
+            )
     
     db.commit()
     
@@ -95,7 +111,22 @@ def reject_application(
             detail="해당하는 지원을 찾을 수 없습니다."
         )
     
+    # 게시글 정보 가져오기
+    recruitment_post = db.query(RecruitmentPost).filter(
+        RecruitmentPost.recruitment_post_id == reject_data.recruitment_post_id
+    ).first()
+    
     application.status = ApplicationStatus.rejected
+    
+    # 지원자에게 거절 알림 전송
+    if recruitment_post:
+        NotificationService.notify_application_response(
+            db=db,
+            application_user_id=application.user_id,
+            recruitment_post_title=recruitment_post.title,
+            status="rejected"
+        )
+    
     db.commit()
     
     return {"message": "지원이 거절되었습니다."}

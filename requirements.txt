@@ -34,3 +34,5 @@ lxml>=4.9.0
 
 # 추가 의존성
 typing-extensions>=4.0.0
+
+firebase-admin==6.4.0 
