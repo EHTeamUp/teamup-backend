@@ -23,7 +23,7 @@ from schemas.user import (
     UserIdCheckRequest, UserIdCheckResponse, UserCreateWithVerification
 )
 from utils.auth import get_password_hash, create_access_token
-from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified, generate_verification_code, store_verification_code
+from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified, generate_verification_code, store_verification_code, is_email_verified
 from datetime import datetime, timedelta
 from typing import List
 from config import settings
@@ -100,6 +100,7 @@ def verify_email(request: EmailVerificationCode):
     """이메일 인증번호 검증"""
     try:
         if verify_email_code(request.email, request.verification_code):
+            # verify_email_code에서 이미 mark_email_as_verified를 호출하므로 중복 호출 방지
             return {"message": "이메일 인증이 완료되었습니다."}
         else:
             raise HTTPException(
@@ -265,6 +266,10 @@ def complete_step1(step1: RegistrationStep1, db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired verification code"
             )
+        
+        # 이메일을 인증 완료 상태로 표시 (중복 호출 방지)
+        if not is_email_verified(step1.email):
+            mark_email_as_verified(step1.email)
         
         # 회원가입 세션에 1단계 정보 저장
         registration_sessions[step1.user_id] = {

@@ -104,8 +104,9 @@ def verify_email_code(email: str, verification_code: str) -> bool:
             stored_code = stored_data["code"]
             
             if stored_code == verification_code:
-                # 인증 성공 시 저장소에서 삭제
+                # 인증 성공 시 저장소에서 삭제하고 인증 완료 상태로 표시
                 del verification_codes[email]
+                mark_email_as_verified(email)
                 return True
             
             return False
@@ -128,7 +129,8 @@ def mark_email_as_verified(email: str) -> bool:
     """이메일을 인증 완료 상태로 표시"""
     try:
         with storage_lock:
-            expires_at = datetime.now() + timedelta(hours=24)
+            # 회원가입 과정 동안 충분히 유지되도록 7일로 설정
+            expires_at = datetime.now() + timedelta(days=7)
             verified_emails[email] = {
                 "verified_at": datetime.now(),
                 "expires_at": expires_at
