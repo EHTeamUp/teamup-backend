@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List
 from database import get_db
-from models.recruitment import RecruitmentPost
+from models.recruitment import RecruitmentPost, Application, ApplicationStatus
 from models.contest import Contest
 from models.user import User
 from schemas.recruitment import RecruitmentPostCreate, RecruitmentPostResponse, RecruitmentPostUpdate, RecruitmentPostList
@@ -48,6 +48,12 @@ def get_recruitment_posts(
     # 결과를 RecruitmentPostList 형태로 변환
     result = []
     for post, due_date in recruitment_posts:
+        # accepted된 지원자 수 계산
+        accepted_count = db.query(Application).filter(
+            Application.recruitment_post_id == post.recruitment_post_id,
+            Application.status == ApplicationStatus.accepted
+        ).count()
+        
         post_dict = {
             "recruitment_post_id": post.recruitment_post_id,
             "title": post.title,
@@ -56,7 +62,8 @@ def get_recruitment_posts(
             "contest_id": post.contest_id,
             "user_id": post.user_id,
             "created_at": post.created_at,
-            "due_date": due_date
+            "due_date": due_date,
+            "accepted_count": accepted_count
         }
         result.append(RecruitmentPostList(**post_dict))
     

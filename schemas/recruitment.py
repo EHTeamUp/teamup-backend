@@ -29,6 +29,7 @@ class RecruitmentPostResponse(BaseModel):
     user_id: str
     created_at: datetime
     due_date: Optional[date] = None
+    accepted_count: int = 0
     
     class Config:
         from_attributes = True
@@ -42,6 +43,7 @@ class RecruitmentPostList(BaseModel):
     user_id: str
     created_at: datetime
     due_date: Optional[date] = None
+    accepted_count: int = 0
     
     class Config:
         from_attributes = True
