@@ -329,3 +329,5 @@ celerybeat.pid
 
 # Cython debug symbols
 cython_debug/ 
+
+jobs/data/
