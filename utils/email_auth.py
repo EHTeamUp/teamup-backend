@@ -43,6 +43,10 @@ def generate_verification_code(length: int = 6) -> str:
 def send_verification_email(email: str, verification_code: str) -> bool:
     """인증번호를 이메일로 전송"""
     try:
+        print(f"📧 이메일 전송 시작: {email}")
+        print(f"   SMTP 서버: {settings.SMTP_SERVER}:{settings.SMTP_PORT}")
+        print(f"   사용자: {settings.SMTP_USERNAME}")
+        
         # 이메일 메시지 생성
         msg = MIMEMultipart()
         msg['From'] = settings.SMTP_USERNAME
@@ -64,17 +68,29 @@ def send_verification_email(email: str, verification_code: str) -> bool:
         
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
         
-        # SMTP 서버 연결 및 이메일 전송
-        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
+        # SMTP 서버 연결 및 이메일 전송 (타임아웃 설정 추가)
+        print("   🔌 SMTP 서버 연결 중...")
+        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=60)
+        print("   🔒 TLS 시작...")
         server.starttls()
+        print("   🔑 로그인 중...")
         server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        print("   📤 이메일 전송 중...")
         text = msg.as_string()
         server.sendmail(settings.SMTP_USERNAME, email, text)
         server.quit()
+        print(f"✅ 이메일 전송 성공: {email}")
         
         return True
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"❌ SMTP 인증 실패: {e}")
+        print("   💡 Gmail 앱 비밀번호를 확인하고 2단계 인증이 활성화되어 있는지 확인하세요.")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"❌ SMTP 오류: {e}")
+        return False
     except Exception as e:
-        print(f"이메일 전송 실패: {e}")
+        print(f"❌ 이메일 전송 실패: {e}")
         return False
 
 def store_verification_code(email: str, verification_code: str) -> bool:
