@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, model_validator
 from typing import List, Optional
 from datetime import datetime, date
 
@@ -17,33 +17,29 @@ class RegistrationStep2(BaseModel):
     custom_skills: List[str] = Field(example=["Flutter", "Dart"], description="사용자가 직접 입력한 스킬들")
     custom_roles: List[str] = Field(example=["DevOps", "QA"], description="사용자가 직접 입력한 역할들")
     
-    @validator('skill_ids', 'custom_skills')
-    def validate_skills(cls, v, values):
-        """스킬은 기존 선택 또는 사용자 정의 중 최소 1개 이상 필요"""
-        skill_ids = values.get('skill_ids', [])
-        custom_skills = values.get('custom_skills', [])
+    @model_validator(mode='after')
+    def check_interest_selection(self):
+        """기술(skills) 또는 역할(roles) 중 최소 1개 이상 선택 필수"""
+        skill_ids = self.skill_ids or []
+        role_ids = self.role_ids or []
+        custom_skills = self.custom_skills or []
+        custom_roles = self.custom_roles or []
         
         # 빈 문자열 제거
         custom_skills = [skill.strip() for skill in custom_skills if skill.strip()]
-        
-        if not skill_ids and not custom_skills:
-            raise ValueError('스킬을 최소 1개 이상 선택하거나 입력해주세요.')
-        
-        return v
-    
-    @validator('role_ids', 'custom_roles')
-    def validate_roles(cls, v, values):
-        """역할은 기존 선택 또는 사용자 정의 중 최소 1개 이상 필요"""
-        role_ids = values.get('role_ids', [])
-        custom_roles = values.get('custom_roles', [])
-        
-        # 빈 문자열 제거
         custom_roles = [role.strip() for role in custom_roles if role.strip()]
         
-        if not role_ids and not custom_roles:
-            raise ValueError('역할을 최소 1개 이상 선택하거나 입력해주세요.')
+        # 기술 선택 여부 확인
+        has_skills = bool(skill_ids or custom_skills)
         
-        return v
+        # 역할 선택 여부 확인
+        has_roles = bool(role_ids or custom_roles)
+        
+        # 기술 또는 역할 중 최소 1개 이상 선택되어야 함
+        if not has_skills and not has_roles:
+            raise ValueError('기술 또는 역할 중 하나는 반드시 선택해야 합니다.')
+        
+        return self
 
 # 3단계: 공모전 수상 경험 정보
 class ExperienceInput(BaseModel):
