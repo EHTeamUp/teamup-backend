@@ -9,3 +9,28 @@ email-validator==2.2.0
 cryptography==42.0.8
 bcrypt==4.1.2
 python-jose[cryptography]==3.3.0 
+
+# HTTP Client
+httpx==0.25.2
+
+#jobs
+# Crawling dependencies
+# 웹 크롤링 및 HTTP 요청
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+selenium>=4.15.0
+
+# 이미지 처리
+Pillow>=10.0.0
+
+# AI 모델 연동
+ollama>=0.1.0
+
+# 웹 드라이버 (Selenium용)
+webdriver-manager>=4.0.0
+
+# HTML 파싱
+lxml>=4.9.0
+
+# 추가 의존성
+typing-extensions>=4.0.0
