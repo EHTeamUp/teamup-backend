@@ -4,7 +4,7 @@ from datetime import datetime, date
 
 # 1단계: 기본 정보 + 이메일 인증
 class RegistrationStep1(BaseModel):
-    user_id: str = Field(example="teamup_user", description="사용자 ID")
+    user_id: str = Field(example="user123", description="사용자 ID")
     name: str = Field(example="홍길동", description="사용자 실명")
     email: str = Field(example="user@teamup.com", description="이메일 주소")
     password: str = Field(example="password123", description="비밀번호")
@@ -12,6 +12,7 @@ class RegistrationStep1(BaseModel):
 
 # 2단계: 스킬 + 역할 선택
 class RegistrationStep2(BaseModel):
+    user_id: str = Field(example="user123", description="사용자 ID")
     skill_ids: List[int] = Field(example=[1, 2, 3], description="선택한 스킬 ID 목록")
     role_ids: List[int] = Field(example=[1, 2], description="선택한 역할 ID 목록")
     custom_skills: List[str] = Field(example=["Flutter", "Dart"], description="사용자가 직접 입력한 스킬들")
@@ -51,6 +52,7 @@ class ExperienceInput(BaseModel):
     filter_id: int = Field(example=1, description="필터 ID (공모전 카테고리)")
 
 class RegistrationStep3(BaseModel):
+    user_id: str = Field(example="user123", description="사용자 ID")
     experiences: List[ExperienceInput] = Field(example=[], description="공모전 수상 경험 목록")
 
 # 4단계: 성향테스트 (필수)
@@ -59,6 +61,7 @@ class PersonalityAnswer(BaseModel):
     option_id: int = Field(example=1, description="선택한 보기 ID")
 
 class RegistrationStep4(BaseModel):
+    user_id: str = Field(example="user123", description="사용자 ID")
     answers: List[PersonalityAnswer] = Field(example=[], description="성향테스트 답변 목록")
     
     @validator('answers')
