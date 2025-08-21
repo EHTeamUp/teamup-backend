@@ -23,7 +23,7 @@ from schemas.user import (
     UserIdCheckRequest, UserIdCheckResponse, UserCreateWithVerification
 )
 from utils.auth import get_password_hash, create_access_token
-from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified
+from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified, generate_verification_code, store_verification_code
 from datetime import datetime, timedelta
 from typing import List
 from config import settings
@@ -67,8 +67,18 @@ def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
 def send_email_verification(request: EmailVerificationRequest):
     """이메일 인증번호 발송"""
     try:
+        # 인증번호 생성
+        verification_code = generate_verification_code()
+        
+        # 인증번호를 메모리에 저장
+        if not store_verification_code(request.email, verification_code):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to store verification code"
+            )
+        
         # 이메일 인증번호 발송
-        if send_verification_email(request.email):
+        if send_verification_email(request.email, verification_code):
             return EmailVerificationResponse(
                 message=f"인증번호가 {request.email}로 발송되었습니다."
             )
