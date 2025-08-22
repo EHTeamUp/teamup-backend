@@ -348,12 +348,12 @@ def get_user_experiences(
             detail=f"Internal server error: {str(e)}"
         )
 
-@router.get("/profile/{user_id}", response_model=dict)
+@router.get("/{user_id}", response_model=dict)
 def get_user_mypage(
     user_id: str,
     db: Session = Depends(get_db)
 ):
-    """특정 사용자의 마이페이지 정보 조회"""
+    """특정 사용자의 프로필 정보 조회"""
     try:
         # 사용자 조회
         user = db.query(User).filter(User.user_id == user_id, User.is_deleted == False).first()
