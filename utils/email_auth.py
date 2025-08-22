@@ -129,16 +129,21 @@ def verify_email_code(email: str, verification_code: str) -> bool:
                 # 인증 성공 시 저장소에서 삭제
                 del verification_codes[email]
                 print(f"✅ 인증번호 일치, 저장소에서 삭제: {email}")
-                # 락 해제 후 mark_email_as_verified 호출
+                
+                # 락을 유지한 상태에서 인증 완료 상태 저장
+                expires_at_verified = datetime.now() + timedelta(days=7)
+                verified_emails[email] = {
+                    "verified_at": datetime.now(),
+                    "expires_at": expires_at_verified
+                }
+                print(f"✅ 이메일 인증 완료 상태 저장: {email}")
+                print(f"   저장된 데이터: {verified_emails[email]}")
+                print(f"   현재 verified_emails 키: {list(verified_emails.keys())}")
+                
+                return True
             else:
                 print(f"❌ 인증번호 불일치: {email}")
                 return False
-        
-        # 락 해제 후 인증 완료 상태 저장
-        if stored_code == verification_code:
-            mark_email_as_verified(email)
-            print(f"✅ 이메일 인증 성공: {email}")
-            return True
         
         return False
     except Exception as e:
@@ -148,40 +153,40 @@ def verify_email_code(email: str, verification_code: str) -> bool:
 def is_email_verified(email: str) -> bool:
     """이메일이 이미 인증되었는지 확인"""
     try:
+        print(f"🔍 이메일 인증 상태 확인 시작: {email}")
+        print(f"   현재 verified_emails 키: {list(verified_emails.keys())}")
+        
         with storage_lock:
             if email in verified_emails:
                 verified_data = verified_emails[email]
                 expires_at = verified_data["expires_at"]
+                current_time = datetime.now()
+                
+                print(f"   인증 데이터: {verified_data}")
+                print(f"   현재 시간: {current_time}")
+                print(f"   만료 시간: {expires_at}")
                 
                 # 만료 시간 확인
-                if datetime.now() > expires_at:
+                if current_time > expires_at:
                     del verified_emails[email]
                     print(f"❌ 이메일 인증 상태 만료: {email}")
                     return False
                 
                 print(f"✅ 이메일 인증 상태 확인: {email}")
                 return True
-            print(f"❌ 이메일 인증 상태 없음: {email}")
-            return False
+            else:
+                print(f"❌ 이메일 인증 상태 없음: {email}")
+                return False
     except Exception as e:
         print(f"❌ 이메일 인증 상태 확인 실패: {e}")
         return False
 
+# mark_email_as_verified 함수는 더 이상 사용되지 않음
+# verify_email_code 내부에서 직접 처리하도록 변경됨
 def mark_email_as_verified(email: str) -> bool:
-    """이메일을 인증 완료 상태로 표시"""
-    try:
-        # 이미 락을 가지고 있으므로 락 없이 직접 접근
-        # 회원가입 과정 동안 충분히 유지되도록 7일로 설정
-        expires_at = datetime.now() + timedelta(days=7)
-        verified_emails[email] = {
-            "verified_at": datetime.now(),
-            "expires_at": expires_at
-        }
-        print(f"✅ 이메일 인증 완료 상태 저장: {email}")
-        return True
-    except Exception as e:
-        print(f"❌ 이메일 인증 완료 표시 실패: {e}")
-        return False
+    """이메일을 인증 완료 상태로 표시 (더 이상 사용되지 않음)"""
+    print(f"⚠️ mark_email_as_verified는 더 이상 사용되지 않습니다: {email}")
+    return False
 
 # 백그라운드에서 주기적으로 만료된 데이터 정리
 def start_cleanup_thread():
