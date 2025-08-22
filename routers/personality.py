@@ -84,7 +84,21 @@ def submit_personality_test(request: SubmitTestRequest, db: Session = Depends(ge
                 detail="No matching personality profile found"
             )
         
-        # UserTraitProfile 저장
+        # 사용자 존재 여부 확인 (회원가입 중일 수 있으므로 경고만 출력)
+        from models.user import User
+        user = db.query(User).filter(User.user_id == request.user_id).first()
+        if not user:
+            print(f"WARNING: User '{request.user_id}' not found. This might be during registration process.")
+            # 회원가입 중이므로 결과만 반환하고 DB에 저장하지 않음
+            return TestResultResponse(
+                profile_code=profile_rule.profile_code,
+                display_name=profile_rule.display_name,
+                description=profile_rule.description,
+                traits=traits,
+                completed_at=None  # 아직 저장하지 않았으므로 None
+            )
+        
+        # 사용자가 존재하는 경우에만 DB에 저장
         trait_profile = UserTraitProfileModel(
             user_id=request.user_id,
             profile_code=profile_rule.profile_code,
@@ -101,7 +115,7 @@ def submit_personality_test(request: SubmitTestRequest, db: Session = Depends(ge
             display_name=profile_rule.display_name,
             description=profile_rule.description,
             traits=traits,
-            completed_at=trait_profile.created_at
+            completed_at=trait_profile.created_at if trait_profile else None
         )
         
     except HTTPException:
@@ -124,16 +138,30 @@ def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
     for rule in profile_rules:
         required_tags = rule.required_tags_json
         
-        # 정확히 일치하는 태그 개수 계산
+        # JSON이 문자열인 경우 파싱
+        if isinstance(required_tags, str):
+            try:
+                required_tags = json.loads(required_tags)
+            except json.JSONDecodeError:
+                print(f"DEBUG: Invalid JSON in required_tags_json for rule {rule.profile_code}")
+                continue
+        
+        # required_tags가 리스트가 아닌 경우 처리
+        if not isinstance(required_tags, list):
+            print(f"DEBUG: required_tags is not a list for rule {rule.profile_code}: {type(required_tags)}")
+            continue
+        
+        # 일치하는 태그 개수 계산
         match_count = 0
         for tag in required_tags:
             if tag in traits.values():
                 match_count += 1
         
-        # 모든 태그가 일치하는 경우만 고려
-        if match_count == len(required_tags):
-            # priority가 낮을수록 우선순위가 높음
-            score = 1000 - rule.priority + match_count
+        # 매칭 점수 계산 (부분 일치도 고려)
+        if match_count > 0:
+            # 매칭 비율과 우선순위를 고려한 점수 계산
+            match_ratio = match_count / len(required_tags)
+            score = (match_ratio * 1000) - rule.priority + match_count
             
             if score > best_score:
                 best_score = score

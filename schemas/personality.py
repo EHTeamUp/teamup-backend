@@ -70,7 +70,7 @@ class TestResultResponse(BaseModel):
     display_name: str
     description: str
     traits: Dict[str, str]
-    completed_at: datetime
+    completed_at: Optional[datetime] = None
 
 # 질문 목록 응답 스키마
 class QuestionListResponse(BaseModel):
