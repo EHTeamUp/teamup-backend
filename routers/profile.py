@@ -347,3 +347,84 @@ def get_user_experiences(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
+
+@router.get("/profile/{user_id}", response_model=dict)
+def get_user_mypage(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """특정 사용자의 마이페이지 정보 조회"""
+    try:
+        # 사용자 조회
+        user = db.query(User).filter(User.user_id == user_id, User.is_deleted == False).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="사용자를 찾을 수 없습니다."
+            )
+        
+        # 사용자의 스킬 정보 조회
+        user_skills = db.query(UserSkill).filter(UserSkill.user_id == user_id).all()
+        skill_ids = []
+        custom_skills = []
+        
+        for user_skill in user_skills:
+            skill = db.query(Skill).filter(Skill.skill_id == user_skill.skill_id).first()
+            if skill:
+                if skill.is_custom:
+                    custom_skills.append(skill.name)
+                else:
+                    skill_ids.append(skill.skill_id)
+        
+        # 사용자의 역할 정보 조회
+        user_roles = db.query(UserRole).filter(UserRole.user_id == user_id).all()
+        role_ids = []
+        custom_roles = []
+        
+        for user_role in user_roles:
+            role = db.query(Role).filter(Role.role_id == user_role.role_id).first()
+            if role:
+                if role.is_custom:
+                    custom_roles.append(role.name)
+                else:
+                    role_ids.append(role.role_id)
+        
+        # 사용자의 경험 정보 조회
+        experiences = db.query(Experience).filter(Experience.user_id == user_id).all()
+        experience_list = [
+            {
+                "contest_name": exp.contest_name,
+                "award_date": exp.award_date,
+                "host_organization": exp.host_organization,
+                "award_name": exp.award_name,
+                "description": exp.description,
+                "filter_id": exp.filter_id
+            }
+            for exp in experiences
+        ]
+        
+        return {
+            "user_info": {
+                "user_id": user.user_id,
+                "name": user.name,
+                "email": user.email,
+                "is_deleted": user.is_deleted
+            },
+            "skills": {
+                "skill_ids": skill_ids,
+                "custom_skills": custom_skills
+            },
+            "roles": {
+                "role_ids": role_ids,
+                "custom_roles": custom_roles
+            },
+            "experiences": experience_list
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
