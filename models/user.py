@@ -24,5 +24,4 @@ class User(Base):
     # 성향 테스트 관련 관계
     trait_profiles = relationship("UserTraitProfile", back_populates="user")
     
-    # 알림 관련 관계
-    notifications = relationship("Notification", back_populates="user") 
+ 

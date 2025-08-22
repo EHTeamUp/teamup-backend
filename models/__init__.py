@@ -21,8 +21,7 @@ from .recruitment import (
     RecruitmentPost, Application, ApplicationStatus, Comment
 )
 
-# Notification models
-from .notification import Notification, NotificationType
+
 
 # Export all models
 __all__ = [
@@ -44,6 +43,5 @@ __all__ = [
     # Recruitment
     "RecruitmentPost", "Application", "ApplicationStatus", "Comment",
     
-    # Notification
-    "Notification", "NotificationType"
+
 ] 

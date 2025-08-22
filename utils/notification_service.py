@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from models.notification import Notification, NotificationType
 from models.user import User
 from models.user_skill import UserSkill
 from models.contest import Contest, ContestFilter
@@ -16,7 +15,7 @@ class NotificationService:
     def create_notification(
         db: Session,
         user_id: str,
-        notification_type: NotificationType,
+        notification_type: str,
         title: str,
         message: str,
         related_data: Dict[str, Any] = None
@@ -36,7 +35,7 @@ class NotificationService:
                     title=title,
                     body=message,
                     data={
-                        "type": notification_type.value,
+                        "type": notification_type,
                         "related_data": json.dumps(related_data) if related_data else ""
                     }
                 )
@@ -80,7 +79,7 @@ class NotificationService:
                 success = NotificationService.create_notification(
                     db=db,
                     user_id=user_id,
-                    notification_type=NotificationType.NEW_CONTEST,
+                    notification_type="new_contest",
                     title="새로운 공모전이 등록되었습니다!",
                     message=f"'{contest.name}' 공모전이 등록되었습니다. 확인해보세요!",
                     related_data={
@@ -127,7 +126,7 @@ class NotificationService:
             success = NotificationService.create_notification(
                 db=db,
                 user_id=application_user_id,
-                notification_type=NotificationType.APPLICATION_RESPONSE,
+                notification_type="application_response",
                 title="팀 지원 결과",
                 message=f"'{recruitment_post.title}' 팀 지원이 {status_text}되었습니다.",
                 related_data={
@@ -169,7 +168,7 @@ class NotificationService:
             return NotificationService.create_notification(
                 db=db,
                 user_id=recruitment_post_user_id,
-                notification_type=NotificationType.NEW_COMMENT,
+                notification_type="new_comment",
                 title="새 댓글이 달렸습니다",
                 message=f"'{recruitment_post.title}' 게시글에 {comment_user_name}님이 댓글을 남겼습니다.",
                 related_data={
@@ -205,8 +204,8 @@ class NotificationService:
             return NotificationService.create_notification(
                 db=db,
                 user_id=parent_comment_user_id,
-                notification_type=NotificationType.NEW_REPLY,
-                title="새 대댓글이 달렸습니다",
+                notification_type="new_reply",
+                title="새 댓글이 달렸습니다",
                 message=f"'{recruitment_post.title}' 게시글에 {reply_user_name}님이 대댓글을 남겼습니다.",
                 related_data={
                     "recruitment_post_id": recruitment_post_id,
@@ -217,6 +216,42 @@ class NotificationService:
             )
         except Exception as e:
             print(f"Error notifying new reply: {e}")
+            return False
+    
+    @staticmethod
+    def notify_new_application(
+        db: Session,
+        recruitment_post_user_id: str,
+        applicant_name: str,
+        recruitment_post_id: int,
+        application_message: str
+    ) -> bool:
+        """새로운 지원 알림 전송"""
+        try:
+            # 모집 게시글 정보 조회
+            recruitment_post = db.query(RecruitmentPost).filter(
+                RecruitmentPost.recruitment_post_id == recruitment_post_id
+            ).first()
+            
+            if not recruitment_post:
+                print(f"Recruitment post not found: {recruitment_post_id}")
+                return False
+            
+            return NotificationService.create_notification(
+                db=db,
+                user_id=recruitment_post_user_id,
+                notification_type="new_application",
+                title="새로운 지원자가 등록되었습니다",
+                message=f"'{recruitment_post.title}' 게시글에 {applicant_name}님이 지원했습니다.",
+                related_data={
+                    "recruitment_post_id": recruitment_post_id,
+                    "recruitment_post_title": recruitment_post.title,
+                    "applicant_name": applicant_name,
+                    "application_message": application_message[:50] + "..." if len(application_message) > 50 else application_message
+                }
+            )
+        except Exception as e:
+            print(f"Error notifying new application: {e}")
             return False
     
     @staticmethod
@@ -233,7 +268,7 @@ class NotificationService:
                 success = NotificationService.create_notification(
                     db=db,
                     user_id=user.user_id,
-                    notification_type=NotificationType.CONTEST_DEADLINE,
+                    notification_type="contest_deadline",
                     title="공모전 마감일 알림",
                     message=f"'{contest.name}' 공모전이 {contest.due_date.strftime('%Y년 %m월 %d일')}에 마감됩니다!",
                     related_data={

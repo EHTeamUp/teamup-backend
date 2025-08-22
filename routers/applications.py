@@ -49,6 +49,27 @@ def create_application(
     db.commit()
     db.refresh(db_application)
     
+    # 게시글 작성자에게 새로운 지원 알림 전송
+    try:
+        # 게시글 정보 가져오기
+        recruitment_post = db.query(RecruitmentPost).filter(
+            RecruitmentPost.recruitment_post_id == application.recruitment_post_id
+        ).first()
+        
+        # 지원자 정보 가져오기
+        applicant = db.query(User).filter(User.user_id == application.user_id).first()
+        
+        if recruitment_post and applicant:
+            NotificationService.notify_new_application(
+                db=db,
+                recruitment_post_user_id=recruitment_post.user_id,
+                applicant_name=applicant.name,
+                recruitment_post_id=recruitment_post.recruitment_post_id,
+                application_message=application.message
+            )
+    except Exception as e:
+        print(f"Error sending new application notification: {e}")
+    
     return db_application
 
 @router.put("/accept", status_code=status.HTTP_200_OK)
