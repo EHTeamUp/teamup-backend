@@ -99,10 +99,14 @@ def send_email_verification(request: EmailVerificationRequest):
 def verify_email(request: EmailVerificationCode):
     """이메일 인증번호 검증"""
     try:
+        print(f"🔍 이메일 인증 요청: {request.email}")
+        print(f"   인증번호: {request.verification_code}")
+        
         if verify_email_code(request.email, request.verification_code):
-            # verify_email_code에서 이미 mark_email_as_verified를 호출하므로 중복 호출 방지
+            print(f"✅ 이메일 인증 성공: {request.email}")
             return {"message": "이메일 인증이 완료되었습니다."}
         else:
+            print(f"❌ 이메일 인증 실패: {request.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired verification code"
@@ -110,6 +114,7 @@ def verify_email(request: EmailVerificationCode):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ 이메일 인증 중 오류 발생: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
