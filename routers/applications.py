@@ -84,7 +84,7 @@ def accept_applications(
             NotificationService.notify_application_response(
                 db=db,
                 application_user_id=application.user_id,
-                recruitment_post_title=recruitment_post.title,
+                recruitment_post_id=status_update.recruitment_post_id,
                 status="accepted"
             )
     
@@ -123,7 +123,7 @@ def reject_application(
         NotificationService.notify_application_response(
             db=db,
             application_user_id=application.user_id,
-            recruitment_post_title=recruitment_post.title,
+            recruitment_post_id=reject_data.recruitment_post_id,
             status="rejected"
         )
     

@@ -40,6 +40,10 @@ class Settings:
         "http://localhost:8000",
         "http://127.0.0.1:8000"
     ]
+    
+    # Firebase Configuration
+    GOOGLE_CLOUD_PROJECT: str = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    FIREBASE_CREDENTIALS_PATH: str = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
 
 # 설정 인스턴스 생성
 settings = Settings() 

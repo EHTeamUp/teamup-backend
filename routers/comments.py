@@ -68,7 +68,7 @@ def create_comment(
                     db=db,
                     parent_comment_user_id=parent_comment.user_id,
                     reply_user_name=comment_user.name,
-                    recruitment_post_title=recruitment_post.title,
+                    recruitment_post_id=recruitment_post.recruitment_post_id,
                     reply_content=comment.content
                 )
             else:
@@ -78,7 +78,7 @@ def create_comment(
                         db=db,
                         recruitment_post_user_id=recruitment_post.user_id,
                         comment_user_name=comment_user.name,
-                        recruitment_post_title=recruitment_post.title,
+                        recruitment_post_id=recruitment_post.recruitment_post_id,
                         comment_content=comment.content
                     )
     except Exception as e:

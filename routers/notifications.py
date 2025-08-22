@@ -7,6 +7,7 @@ from schemas.notification import FCMTokenUpdate
 from utils.notification_service import NotificationService
 from utils.auth import get_current_user
 from datetime import datetime, timedelta
+from models.recruitment import RecruitmentPost
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

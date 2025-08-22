@@ -8,6 +8,7 @@ from schemas.user import (
 )
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user
 from datetime import timedelta
+from utils.notification_service import NotificationService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -48,12 +49,17 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             detail=f"Internal server error: {str(e)}"
         )
 
+
 @router.post("/logout", response_model=LogoutResponse)
-def logout(current_user: User = Depends(get_current_user)):
-    """사용자 로그아웃"""
+def logout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """사용자 로그아웃 - FCM 토큰 삭제"""
     try:
-        # JWT 토큰은 클라이언트에서 삭제하도록 안내
-        # 서버에서는 현재 사용자 정보만 반환하여 로그아웃 확인
+        # FCM 토큰 삭제
+        NotificationService.delete_fcm_token(db, current_user.user_id)
+        
         return LogoutResponse(
             message=f"{current_user.name}님, 로그아웃이 완료되었습니다."
         )
