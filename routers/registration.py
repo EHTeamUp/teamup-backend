@@ -265,16 +265,12 @@ def complete_step1(step1: RegistrationStep1, db: Session = Depends(get_db)):
                 detail="Email already registered"
             )
         
-        # 이메일 인증번호 검증
-        if not verify_email_code(step1.email, step1.verification_code):
+        # 이메일 인증 완료 상태 확인 (이미 verify-email에서 완료됨)
+        if not is_email_verified(step1.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired verification code"
+                detail="Email not verified. Please verify your email first."
             )
-        
-        # 이메일을 인증 완료 상태로 표시 (중복 호출 방지)
-        if not is_email_verified(step1.email):
-            mark_email_as_verified(step1.email)
         
         # 회원가입 세션에 1단계 정보 저장
         registration_sessions[step1.user_id] = {

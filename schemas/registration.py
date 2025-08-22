@@ -8,7 +8,6 @@ class RegistrationStep1(BaseModel):
     name: str = Field(example="홍길동", description="사용자 실명")
     email: str = Field(example="user@teamup.com", description="이메일 주소")
     password: str = Field(example="password123", description="비밀번호")
-    verification_code: str = Field(example="123456", description="이메일 인증번호")
 
 # 2단계: 스킬 + 역할 선택
 class RegistrationStep2(BaseModel):
