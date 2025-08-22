@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
 from models.contest import Contest, Tag, ContestTag, Filter, ContestFilter
-from schemas.contest import ContestListResponse
+from schemas.contest import ContestListResponse, Contest as ContestSchema
 from typing import List
 
 router = APIRouter(prefix="/contests", tags=["contests"])
@@ -112,6 +112,35 @@ def get_contests_by_filter(filter_id: int, db: Session = Depends(get_db)):
         )
 
 
+
+@router.get("/latest", response_model=List[ContestSchema])
+def get_latest_contests(db: Session = Depends(get_db)):
+    """최신 공모전 3개 조회"""
+    try:
+        # 최신 공모전 3개 조회 (생성일 기준 내림차순)
+        latest_contests = db.query(Contest)\
+            .order_by(Contest.contest_id.desc())\
+            .limit(3)\
+            .all()
+        
+        # 각 공모전에 태그 정보 추가
+        for contest in latest_contests:
+            contest.tags = []
+            contest_tags = db.query(ContestTag, Tag)\
+                .join(Tag, ContestTag.tag_id == Tag.tag_id)\
+                .filter(ContestTag.contest_id == contest.contest_id)\
+                .all()
+            
+            for contest_tag, tag in contest_tags:
+                contest.tags.append(tag)
+        
+        return latest_contests
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 @router.get("/{contest_id}")
 def get_contest_detail(contest_id: int, db: Session = Depends(get_db)):

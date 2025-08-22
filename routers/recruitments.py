@@ -33,6 +33,42 @@ def create_recruitment_post(
     
     return db_recruitment_post
 
+@router.get("/latest", response_model=List[RecruitmentPostList])
+def get_latest_recruitment_posts(
+    db: Session = Depends(get_db)
+):
+    """
+    최신 모집 게시글 3개 조회
+    """
+    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+        Contest, RecruitmentPost.contest_id == Contest.contest_id
+    ).order_by(RecruitmentPost.created_at.desc()).limit(3).all()
+    
+    # 결과를 RecruitmentPostList 형태로 변환
+    result = []
+    for post, due_date in recruitment_posts:
+        # accepted된 지원자 수 계산
+        accepted_count = db.query(Application).filter(
+            Application.recruitment_post_id == post.recruitment_post_id,
+            Application.status == ApplicationStatus.accepted
+        ).count()
+        
+        post_dict = {
+            "recruitment_post_id": post.recruitment_post_id,
+            "title": post.title,
+            "content": post.content,
+            "recruitment_count": post.recruitment_count,
+            "contest_id": post.contest_id,
+            "user_id": post.user_id,
+            "created_at": post.created_at,
+            "due_date": due_date,
+            "accepted_count": accepted_count
+        }
+        result.append(RecruitmentPostList(**post_dict))
+    
+    return result
+
 @router.get("/read", response_model=List[RecruitmentPostList])
 def get_recruitment_posts(
     db: Session = Depends(get_db)
