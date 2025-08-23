@@ -47,23 +47,15 @@ def update_fcm_token(
 def check_deadlines(db: Session = Depends(get_db)):
     """공모전 마감일 확인 및 알림 전송 (수동 실행)"""
     try:
-        # 3일 후 마감인 공모전들 찾기
-        three_days_later = datetime.now() + timedelta(days=3)
-
-        contests = db.query(Contest).filter(
-            Contest.due_date <= three_days_later,
-            Contest.due_date > datetime.now()
-        ).all()
-
-        sent_count = 0
-        for contest in contests:
-            notifications = NotificationService.notify_contest_deadline(db, contest)
-            sent_count += len(notifications)
+        # 마감일 알림 전송 (모든 관련 사용자에게)
+        sent_results = NotificationService.check_and_send_deadline_reminders(db)
+        
+        total_sent = sum(sent_results.values()) if sent_results else 0
 
         return {
             "message": f"마감일 확인 완료",
-            "contests_checked": len(contests),
-            "notifications_sent": sent_count
+            "notifications_sent": total_sent,
+            "details": sent_results
         }
 
     except Exception as e:

@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from models.user import User
 from models.user_skill import UserSkill
-from models.contest import Contest, ContestFilter
-from models.recruitment import RecruitmentPost
+from models.contest import Contest, ContestFilter, ContestTag, Tag
+from models.recruitment import RecruitmentPost, Application, ApplicationStatus
+from models.skill import Skill
 from utils.fcm_service import FCMService
 from typing import List, Dict, Any
 import json
@@ -255,26 +256,51 @@ class NotificationService:
             return False
     
     @staticmethod
-    def notify_contest_deadline(db: Session, contest: Contest) -> int:
-        """공모전 마감일 알림 전송"""
+    def notify_new_contest_with_skill_matching(db: Session, contest: Contest) -> int:
+        """새로운 공모전 태그와 사용자 스킬 매칭 알림 전송"""
         sent_count = 0
         
         try:
-            # 공모전에 지원한 사용자들 찾기 (지원 모델이 있다면)
-            # 여기서는 간단히 모든 활성 사용자에게 전송
-            active_users = db.query(User).filter(User.is_deleted == False).all()
+            # 공모전의 태그들 가져오기
+            contest_tags = db.query(ContestTag).filter(
+                ContestTag.contest_id == contest.contest_id
+            ).all()
             
-            for user in active_users:
+            if not contest_tags:
+                print(f"공모전 {contest.contest_title}에 태그가 없습니다.")
+                return sent_count
+            
+            # 태그 이름들 가져오기
+            tag_ids = [ct.tag_id for ct in contest_tags]
+            tags = db.query(Tag).filter(Tag.tag_id.in_(tag_ids)).all()
+            tag_names = [tag.name for tag in tags]
+            
+            print(f"공모전 '{contest.name}' 태그: {tag_names}")
+            
+            # 해당 태그와 매칭되는 스킬을 가진 사용자들 찾기
+            matching_users = db.query(UserSkill.user_id).filter(
+                UserSkill.skill_id.in_(
+                    db.query(Skill.skill_id).filter(Skill.name.in_(tag_names))
+                )
+            ).distinct().all()
+            
+            user_ids = [user[0] for user in matching_users]
+            
+            print(f"매칭된 사용자 수: {len(user_ids)}")
+            
+            # 각 사용자에게 알림 전송
+            for user_id in user_ids:
                 success = NotificationService.create_notification(
                     db=db,
-                    user_id=user.user_id,
-                    notification_type="contest_deadline",
-                    title="공모전 마감일 알림",
-                    message=f"'{contest.name}' 공모전이 {contest.due_date.strftime('%Y년 %m월 %d일')}에 마감됩니다!",
+                    user_id=user_id,
+                    notification_type="new_contest_skill_match",
+                    title="관련 공모전이 등록되었습니다!",
+                    message=f"'{contest.name}' 공모전이 등록되었습니다. {', '.join(tag_names)}과 관련이 있어요!",
                     related_data={
                         "contest_id": contest.contest_id,
                         "contest_name": contest.name,
-                        "due_date": contest.due_date.isoformat()
+                        "due_date": contest.due_date.isoformat(),
+                        "matching_tags": tag_names
                     }
                 )
                 if success:
@@ -283,8 +309,108 @@ class NotificationService:
             return sent_count
             
         except Exception as e:
-            print(f"Error notifying contest deadline: {e}")
+            print(f"Error notifying new contest with skill matching: {e}")
+            import traceback
+            traceback.print_exc()
             return sent_count
+    
+
+    
+    @staticmethod
+    def notify_contest_deadline_reminder(db: Session, contest: Contest, days_remaining: int) -> int:
+        """공모전 마감일 알림 전송 (특정 일수 남았을 때)"""
+        sent_count = 0
+        
+        try:
+            # 공모전 모집글 작성자와 참여자들(status=accepted) 찾기
+            recruitment_posts = db.query(RecruitmentPost).filter(
+                RecruitmentPost.contest_id == contest.contest_id
+            ).all()
+            
+            target_user_ids = set()
+            
+            for post in recruitment_posts:
+                # 모집글 작성자 추가
+                target_user_ids.add(post.user_id)
+                
+                # 수락된 지원자들 추가
+                accepted_applications = db.query(Application).filter(
+                    Application.recruitment_post_id == post.recruitment_post_id,
+                    Application.status == ApplicationStatus.accepted
+                ).all()
+                
+                for app in accepted_applications:
+                    target_user_ids.add(app.user_id)
+            
+            if not target_user_ids:
+                print(f"공모전 {contest.contest_id}에 관련된 사용자가 없습니다.")
+                return sent_count
+            
+            # 일수에 따른 메시지 생성
+            if days_remaining == 0:
+                title = "공모전 마감일입니다!"
+                message = f"'{contest.name}' 공모전이 오늘 마감됩니다!"
+            else:
+                title = f"공모전 마감 {days_remaining}일 전"
+                message = f"'{contest.name}' 공모전이 {days_remaining}일 후 마감됩니다!"
+            
+            # 각 사용자에게 알림 전송
+            for user_id in target_user_ids:
+                success = NotificationService.create_notification(
+                    db=db,
+                    user_id=user_id,
+                    notification_type="contest_deadline_reminder",
+                    title=title,
+                    message=message,
+                    related_data={
+                        "contest_id": contest.contest_id,
+                        "contest_name": contest.name,
+                        "due_date": contest.due_date.isoformat(),
+                        "days_remaining": days_remaining
+                    }
+                )
+                if success:
+                    sent_count += 1
+            
+            print(f"공모전 마감일 알림 전송 완료: {sent_count}명에게 전송 (마감 {days_remaining}일 전)")
+            return sent_count
+            
+        except Exception as e:
+            print(f"Error notifying contest deadline reminder: {e}")
+            import traceback
+            traceback.print_exc()
+            return sent_count
+    
+    @staticmethod
+    def check_and_send_deadline_reminders(db: Session) -> Dict[str, int]:
+        """모든 공모전의 마감일을 확인하고 알림 전송"""
+        try:
+            today = datetime.now().date()
+            reminder_days = [30, 10, 5, 1, 0]  # 알림을 보낼 일수들
+            total_sent = {}
+            
+            # 마감일이 임박한 공모전들 조회
+            upcoming_contests = db.query(Contest).filter(
+                Contest.due_date >= today
+            ).all()
+            
+            for contest in upcoming_contests:
+                days_until_deadline = (contest.due_date - today).days
+                
+                # 알림을 보낼 일수인지 확인
+                if days_until_deadline in reminder_days:
+                    sent_count = NotificationService.notify_contest_deadline_reminder(
+                        db, contest, days_until_deadline
+                    )
+                    total_sent[f"{contest.contest_id}_{days_until_deadline}"] = sent_count
+            
+            return total_sent
+            
+        except Exception as e:
+            print(f"Error checking deadline reminders: {e}")
+            import traceback
+            traceback.print_exc()
+            return {}
     
     @staticmethod
     def update_fcm_token(db: Session, user_id: str, fcm_token: str) -> bool:

@@ -89,6 +89,8 @@ class TagGenerator:
         session: Session = SessionLocal()
         inserted = 0
         skipped = 0
+        newly_inserted_contests = []  # 새로 추가된 공모전들을 추적
+        
         try:
             print(f"DB 저장 시작: {len(contests)}개 공모전")
             
@@ -174,6 +176,7 @@ class TagGenerator:
                         session.add(contest_filter)
 
                     inserted += 1
+                    newly_inserted_contests.append(contest_entity)  # 새로 추가된 공모전 추적
                     print(f"  [{i}] 완료: {title}")
                     
                 except Exception as e:
@@ -184,6 +187,15 @@ class TagGenerator:
             if inserted > 0:
                 session.commit()
                 print(f"DB 저장 완료: {inserted}개 추가, {skipped}개 건너뜀")
+                
+                # 새로 추가된 공모전들에 대해 스킬 매칭 알림 전송
+                try:
+                    from utils.notification_service import NotificationService
+                    for contest in newly_inserted_contests:
+                        sent_count = NotificationService.notify_new_contest_with_skill_matching(session, contest)
+                        print(f"  - '{contest.name}' 공모전 스킬 매칭 알림: {sent_count}명에게 전송")
+                except Exception as e:
+                    print(f"  - 스킬 매칭 알림 전송 중 오류: {e}")
             else:
                 session.rollback()
                 print("저장할 데이터가 없어 롤백")
