@@ -25,8 +25,8 @@ class RecruitmentPost(Base):
     contest = relationship("Contest", back_populates="recruitment_posts")
     
     # Relationships
-    applications = relationship("Application", back_populates="recruitment_post")
-    comments = relationship("Comment", back_populates="recruitment_post")
+    applications = relationship("Application", back_populates="recruitment_post", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="recruitment_post", cascade="all, delete-orphan")
 
 class Application(Base):
     __tablename__ = "applications"
@@ -55,7 +55,7 @@ class Comment(Base):
     recruitment_post = relationship("RecruitmentPost", back_populates="comments")
     user = relationship("User", back_populates="comments")
     parent_comment = relationship("Comment", remote_side=[comment_id])
-    replies = relationship("Comment", back_populates="parent_comment")
+    replies = relationship("Comment", back_populates="parent_comment", cascade="all, delete-orphan")
     
     def __init__(self, **kwargs):
         # parent_comment_id가 0이면 None으로 변환
