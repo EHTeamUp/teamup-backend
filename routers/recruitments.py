@@ -40,14 +40,14 @@ def get_latest_recruitment_posts(
     """
     최신 모집 게시글 3개 조회
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
-    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
     ).order_by(RecruitmentPost.created_at.desc()).limit(3).all()
     
     # 결과를 RecruitmentPostList 형태로 변환
     result = []
-    for post, due_date in recruitment_posts:
+    for post, due_date, contest_name in recruitment_posts:
         # accepted된 지원자 수 계산
         accepted_count = db.query(Application).filter(
             Application.recruitment_post_id == post.recruitment_post_id,
@@ -60,6 +60,7 @@ def get_latest_recruitment_posts(
             "content": post.content,
             "recruitment_count": post.recruitment_count,
             "contest_id": post.contest_id,
+            "contest_name": contest_name,
             "user_id": post.user_id,
             "created_at": post.created_at,
             "due_date": due_date,
@@ -76,14 +77,14 @@ def get_recruitment_posts(
     """
     모든 모집 게시글 목록 조회 (페이징 없음)
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
-    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
     ).all()
     
     # 결과를 RecruitmentPostList 형태로 변환
     result = []
-    for post, due_date in recruitment_posts:
+    for post, due_date, contest_name in recruitment_posts:
         # accepted된 지원자 수 계산
         accepted_count = db.query(Application).filter(
             Application.recruitment_post_id == post.recruitment_post_id,
@@ -96,6 +97,7 @@ def get_recruitment_posts(
             "content": post.content,
             "recruitment_count": post.recruitment_count,
             "contest_id": post.contest_id,
+            "contest_name": contest_name,
             "user_id": post.user_id,
             "created_at": post.created_at,
             "due_date": due_date,
@@ -113,8 +115,8 @@ def get_recruitment_post(
     """
     특정 모집 게시글 조회
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
-    result = db.query(RecruitmentPost, Contest.due_date).join(
+    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    result = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
     ).filter(RecruitmentPost.recruitment_post_id == recruitment_post_id).first()
     
@@ -124,7 +126,7 @@ def get_recruitment_post(
             detail="게시글을 찾을 수 없습니다."
         )
     
-    post, due_date = result
+    post, due_date, contest_name = result
     
     # 결과를 RecruitmentPostResponse 형태로 변환
     post_dict = {
@@ -133,6 +135,7 @@ def get_recruitment_post(
         "content": post.content,
         "recruitment_count": post.recruitment_count,
         "contest_id": post.contest_id,
+        "contest_name": contest_name,
         "user_id": post.user_id,
         "created_at": post.created_at,
         "due_date": due_date
@@ -212,20 +215,21 @@ def get_recruitment_posts_by_contest(
     """
     특정 콘테스트 모집 게시글 목록 조회
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
-    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
     ).filter(RecruitmentPost.contest_id == contest_id).all()
     
     # 결과를 RecruitmentPostList 형태로 변환
     result = []
-    for post, due_date in recruitment_posts:
+    for post, due_date, contest_name in recruitment_posts:
         post_dict = {
             "recruitment_post_id": post.recruitment_post_id,
             "title": post.title,
             "content": post.content,
             "recruitment_count": post.recruitment_count,
             "contest_id": post.contest_id,
+            "contest_name": contest_name,
             "user_id": post.user_id,
             "created_at": post.created_at,
             "due_date": due_date
@@ -269,20 +273,21 @@ def get_written_posts_by_user(
     """
     특정 사용자가 작성한 게시글 목록 조회
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date 정보를 가져옴
-    recruitment_posts = db.query(RecruitmentPost, Contest.due_date).join(
+    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    recruitment_posts = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
     ).filter(RecruitmentPost.user_id == user_id).all()
     
     # 결과를 RecruitmentPostList 형태로 변환
     result = []
-    for post, due_date in recruitment_posts:
+    for post, due_date, contest_name in recruitment_posts:
         post_dict = {
             "recruitment_post_id": post.recruitment_post_id,
             "title": post.title,
             "content": post.content,
             "recruitment_count": post.recruitment_count,
             "contest_id": post.contest_id,
+            "contest_name": contest_name,
             "user_id": post.user_id,
             "created_at": post.created_at,
             "due_date": due_date

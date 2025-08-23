@@ -26,6 +26,7 @@ class RecruitmentPostResponse(BaseModel):
     content: str
     recruitment_count: int
     contest_id: int
+    contest_name: Optional[str] = None
     user_id: str
     created_at: datetime
     due_date: Optional[date] = None
@@ -40,6 +41,7 @@ class RecruitmentPostList(BaseModel):
     content: str
     recruitment_count: int
     contest_id: int
+    contest_name: Optional[str] = None
     user_id: str
     created_at: datetime
     due_date: Optional[date] = None
