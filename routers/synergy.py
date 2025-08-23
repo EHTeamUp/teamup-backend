@@ -5,7 +5,7 @@ from models.user import User
 from models.user_skill import UserSkill as UserSkillModel
 from models.user_role import UserRole as UserRoleModel
 from models.experience import Experience
-from models.personality import UserTraitProfile
+from models.personality import UserTraitProfile, ProfileRule
 from models.skill import Skill
 from models.role import Role
 from schemas.synergy import SynergyRequest, SynergyResponse, SynergyUser, UserSkill, UserRole, UserExperience, UserTrait
@@ -63,13 +63,17 @@ def get_user_traits_detailed(db: Session, user_id: str) -> UserTrait:
         UserTraitProfile.user_id == user_id
     ).first()
     
-    if trait_profile and trait_profile.traits_json:
-        traits = trait_profile.traits_json
+    if trait_profile and trait_profile.profile_code:
+        # profile_rules 테이블에서 display_name 조회
+        profile_rule = db.query(ProfileRule).filter(
+            ProfileRule.profile_code == trait_profile.profile_code
+        ).first()
+        
+        display_name = profile_rule.display_name if profile_rule else trait_profile.profile_code
+        
         return UserTrait(
-            goal=traits.get("goal", ""),
-            role=traits.get("role", ""),
-            time=traits.get("time", ""),
-            problem=traits.get("problem", "")
+            profile_code=trait_profile.profile_code,
+            display_name=display_name
         )
     return None
 

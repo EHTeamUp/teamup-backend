@@ -21,10 +21,8 @@ class UserExperience(BaseModel):
     award_name: Optional[str] = Field(example="대상", description="수상명 (수상한 경우만)")
 
 class UserTrait(BaseModel):
-    goal: str = Field(example="SCHEDULE", description="목표 지향성")
-    role: str = Field(example="LEADER", description="역할 선호도")
-    time: str = Field(example="MORNING", description="시간대 선호도")
-    problem: str = Field(example="ADHOC", description="문제 해결 방식")
+    profile_code: str = Field(example="STRATEGIC_LEADER", description="프로필 코드")
+    display_name: str = Field(example="전략 리더", description="프로필 표시 이름")
 
 class SynergyUser(BaseModel):
     user_id: str = Field(example="user123", description="사용자 ID")
