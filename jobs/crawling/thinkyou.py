@@ -18,8 +18,8 @@ def setup_driver():
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
-    # 헤드리스 모드 (필요시 주석 해제)
-    # chrome_options.add_argument("--headless")
+    # 헤드리스 모드 활성화
+    chrome_options.add_argument("--headless")
     
     driver = webdriver.Chrome(options=chrome_options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
@@ -432,9 +432,13 @@ def save_to_json(contests, filename="data.json"):
     """결과를 JSON 임시 파일로 저장 (집계기가 병합 저장)."""
     try:
         from pathlib import Path
+        # 5개씩만 제한
+        limited_contests = contests[:5] if len(contests) > 5 else contests
+        print(f"thinkyou: {len(contests)}개 중 {len(limited_contests)}개만 저장")
+        
         temp_path = Path(__file__).parent / "thinkyou_temp.json"
         with open(temp_path, 'w', encoding='utf-8') as f:
-            json.dump(contests, f, ensure_ascii=False, indent=2)
+            json.dump(limited_contests, f, ensure_ascii=False, indent=2)
         print(f"임시 결과가 {temp_path}에 저장되었습니다.")
     except Exception as e:
         print(f"파일 저장 중 오류: {e}")

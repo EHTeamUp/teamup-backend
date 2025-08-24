@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""
-TeamUp 크롤링 파이프라인
-2주에 한번씩 실행되어 공모전을 크롤링하고 분석합니다.
-"""
-
 import sys
 import os
 import logging
+import time
+import gc
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -30,17 +27,45 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def main():
-    logger.info("크롤링 시작")
+def safe_crawling():
+    """안전한 크롤링 실행"""
+    logger.info("안전한 크롤링 시작")
     
     try:
-        # 1단계: 크롤링 실행
+        # 1단계: 크롤링 실행 (메모리 제한)
         logger.info("공모전 크롤링 시작")
         crawler = CrawlingExecutor()
-        crawler.run_all_crawling()
+        
+        # 각 크롤링 파일을 개별적으로 실행
+        crawling_files = crawler.get_crawling_files()
+        
+        for file_path in crawling_files:
+            site_name = file_path.stem
+            logger.info(f"=== {site_name} 크롤링 시작 ===")
+            
+            try:
+                # 개별 크롤링 실행
+                crawler.execute_crawling_file(file_path)
+                
+                # 메모리 정리
+                gc.collect()
+                time.sleep(5)  # 5초 대기
+                
+                logger.info(f"=== {site_name} 크롤링 완료 ===")
+                
+            except Exception as e:
+                logger.error(f"{site_name} 크롤링 실패: {e}")
+                continue
+        
+        # 결과 저장
+        crawler.save_all_results()
         logger.info("크롤링 완료")
         
-        # 2단계: 분석 실행
+        # 메모리 정리
+        gc.collect()
+        time.sleep(10)
+        
+        # 2단계: 분석 실행 (별도 프로세스로)
         logger.info("태그 분석 시작")
         
         # .env에서 OLLAMA_HOST 가져오기
@@ -50,6 +75,10 @@ def main():
         analyzer = TagGenerator(ollama_host=ollama_host)
         analyzer.extract_tags_from_final_contest()
         logger.info("분석 완료")
+        
+        # 메모리 정리
+        gc.collect()
+        time.sleep(5)
         
         # 3단계: 마감일 알림 실행 (선택사항)
         logger.info("마감일 알림 실행")
@@ -62,7 +91,7 @@ def main():
         finally:
             db.close()
         
-        logger.info("크롤링 완료")
+        logger.info("모든 작업 완료")
         
     except Exception as e:
         logger.error(f"실패: {e}")
@@ -72,4 +101,4 @@ if __name__ == "__main__":
     # 로그 디렉토리 생성
     os.makedirs("/var/log/teamup", exist_ok=True)
     
-    main()
+    safe_crawling()
