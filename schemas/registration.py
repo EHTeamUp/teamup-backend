@@ -59,9 +59,16 @@ class PersonalityAnswer(BaseModel):
     question_id: int = Field(example=1, description="질문 ID")
     option_id: int = Field(example=1, description="선택한 보기 ID")
 
+class PersonalityResult(BaseModel):
+    profile_code: str = Field(example="STRATEGIC_LEADER", description="성향 프로필 코드")
+    display_name: str = Field(example="전략 리더", description="성향 프로필 표시명")
+    description: str = Field(example="아침형 + 분석 + 완성도 중시. 계획적이고 꼼꼼한 리더", description="성향 프로필 설명")
+    traits: dict = Field(example={"role": "SUPPORTER", "time": "MORNING", "goal": "QUALITY", "problem": "ANALYTIC"}, description="성향 특성")
+
 class RegistrationStep4(BaseModel):
     user_id: str = Field(example="user123", description="사용자 ID")
     answers: List[PersonalityAnswer] = Field(example=[], description="성향테스트 답변 목록")
+    personality_result: Optional[PersonalityResult] = Field(default=None, description="personality/test에서 받은 결과")
     
     @validator('answers')
     def validate_answers(cls, v):

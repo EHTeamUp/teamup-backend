@@ -35,29 +35,67 @@ registration_sessions = {}
 
 def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
     """사용자 답변과 ProfileRule을 매칭하여 최적의 성향 찾기"""
+    print(f"🔍 find_matching_profile 호출됨")
+    print(f"   전달받은 traits: {traits}")
+    
     # 모든 ProfileRule 조회
     profile_rules = db.query(ProfileRuleModel).all()
+    print(f"   데이터베이스에서 조회된 ProfileRule 개수: {len(profile_rules)}")
     
     best_match = None
     best_score = -1
     
     for rule in profile_rules:
         required_tags = rule.required_tags_json
+        print(f"   규칙 {rule.profile_code}: required_tags = {required_tags} (타입: {type(required_tags)})")
+        
+        # JSON이 문자열인 경우 파싱
+        if isinstance(required_tags, str):
+            try:
+                import json
+                required_tags = json.loads(required_tags)
+                print(f"     JSON 파싱 후: {required_tags}")
+            except json.JSONDecodeError:
+                print(f"DEBUG: Invalid JSON in required_tags_json for rule {rule.profile_code}")
+                continue
+        
+        # required_tags가 리스트가 아닌 경우 처리
+        if not isinstance(required_tags, list):
+            print(f"DEBUG: required_tags is not a list for rule {rule.profile_code}: {type(required_tags)}")
+            continue
         
         # 정확히 일치하는 태그 개수 계산
         match_count = 0
-        for tag in required_tags:
-            if tag in traits.values():
-                match_count += 1
+        traits_values = list(traits.values())
+        print(f"     traits.values(): {traits_values}")
+        print(f"     required_tags: {required_tags}")
         
-        # 모든 태그가 일치하는 경우만 고려
+        for tag in required_tags:
+            if tag in traits_values:
+                match_count += 1
+                print(f"       매칭됨: {tag}")
+            else:
+                print(f"       매칭 안됨: {tag}")
+        
+        print(f"     매칭 개수: {match_count}/{len(required_tags)}")
+        
+        # 모든 태그가 일치하는 경우만 고려 (정확한 매칭)
         if match_count == len(required_tags):
             # priority가 낮을수록 우선순위가 높음
             score = 1000 - rule.priority + match_count
+            print(f"     ✅ 완전 매칭! 점수: {score}")
             
             if score > best_score:
                 best_score = score
                 best_match = rule
+                print(f"     🏆 새로운 최고 매칭: {rule.profile_code}")
+        else:
+            print(f"     ❌ 완전 매칭 아님")
+    
+    if best_match:
+        print(f"🎯 최종 매칭 결과: {best_match.profile_code}")
+    else:
+        print(f"❌ 매칭되는 프로필 없음")
     
     return best_match
 
@@ -473,8 +511,64 @@ def complete_step4(step4: RegistrationStep4, db: Session = Depends(get_db)):
                 detail="성향테스트는 4개 질문에 모두 답변해야 합니다."
             )
         
-        # 4단계 정보 저장
-        session["step4"] = step4.dict()
+        # 성향테스트 결과 처리
+        print(f"🔍 step4_data: {step4.dict()}")
+        print(f"   answers: {step4.answers}")
+        print(f"   personality_result: {step4.personality_result}")
+        
+        # personality_result가 있으면 그것을 사용, 없으면 계산
+        if step4.personality_result:
+            print(f"✅ personality/test 결과 사용")
+            traits = step4.personality_result.traits
+            profile_code = step4.personality_result.profile_code
+            print(f"   traits: {traits}")
+            print(f"   profile_code: {profile_code}")
+        else:
+            print(f"🔄 personality/test 결과가 없어서 계산 수행")
+            traits = {}
+            for i, answer in enumerate(step4.answers):
+                print(f"   답변 {i+1}: {answer}")
+                
+                # option_id를 order_no로 처리 (안드로이드에서 전송하는 option_id는 각 질문별 순서)
+                option = db.query(OptionModel).filter(
+                    OptionModel.question_id == answer.question_id,
+                    OptionModel.order_no == answer.option_id
+                ).first()
+                if not option:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid option_id: {answer.option_id} for question_id: {answer.question_id}"
+                    )
+                print(f"     옵션: id={option.id}, question_id={option.question_id}, order_no={option.order_no}, trait_tag={option.trait_tag}")
+                
+                question = db.query(QuestionModel).filter(QuestionModel.id == answer.question_id).first()
+                if not question:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid question_id: {answer.question_id}"
+                    )
+                print(f"     질문: id={question.id}, key_name={question.key_name}")
+                
+                traits[question.key_name] = option.trait_tag
+                print(f"     traits[{question.key_name}] = {option.trait_tag}")
+            
+            print(f"🎯 최종 traits: {traits}")
+            
+            # ProfileRule과 매칭하여 성향 결정
+            profile_rule = find_matching_profile(traits, db)
+            if not profile_rule:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No matching personality profile found"
+                )
+            profile_code = profile_rule.profile_code
+        
+        # 4단계 정보 저장 (프로필 결과 포함)
+        step4_data = step4.dict()
+        step4_data["calculated_traits"] = traits
+        step4_data["profile_code"] = profile_code
+        
+        session["step4"] = step4_data
         session["current_step"] = 4
         session["completed_steps"].append(4)
         
@@ -584,43 +678,26 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
             )
             db.add(experience)
         
-        # 4단계: 성향테스트 결과 저장
+        # 4단계: 성향테스트 결과 저장 (이미 계산된 결과 사용)
         step4_data = session["step4"]
-        if step4_data and "answers" in step4_data:
-            # 답변에서 trait_tag 추출
-            traits = {}
-            for answer in step4_data["answers"]:
-                option = db.query(OptionModel).filter(OptionModel.id == answer["option_id"]).first()
-                if not option:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid option_id: {answer['option_id']}"
-                    )
-                
-                question = db.query(QuestionModel).filter(QuestionModel.id == answer["question_id"]).first()
-                if not question:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid question_id: {answer['question_id']}"
-                    )
-                
-                traits[question.key_name] = option.trait_tag
+        if step4_data and "calculated_traits" in step4_data and "profile_code" in step4_data:
+            print(f"🔍 step4_data에서 이미 계산된 결과 사용")
+            print(f"   calculated_traits: {step4_data['calculated_traits']}")
+            print(f"   profile_code: {step4_data['profile_code']}")
             
-            # ProfileRule과 매칭하여 성향 결정
-            profile_rule = find_matching_profile(traits, db)
-            if not profile_rule:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No matching personality profile found"
-                )
-            
-            # UserTraitProfile 저장
+            # UserTraitProfile 저장 (이미 계산된 결과 사용)
             trait_profile = UserTraitProfileModel(
                 user_id=user_id,
-                profile_code=profile_rule.profile_code,
-                traits_json=traits
+                profile_code=step4_data["profile_code"],
+                traits_json=step4_data["calculated_traits"]
             )
             db.add(trait_profile)
+            print(f"✅ UserTraitProfile 저장 완료: {step4_data['profile_code']}")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Personality test results not found"
+            )
         
         # 이메일을 인증 완료 상태로 표시
         mark_email_as_verified(step1_data["email"])
