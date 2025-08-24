@@ -14,7 +14,9 @@ class Tag(BaseModel):
 class Contest(BaseModel):
     contest_id: int = Field(example=1, description="공모전 ID")
     name: str = Field(example="2024 대학생 소프트웨어 경진대회", description="공모전명")
+    contest_url: str = Field(example="https://example.com/contest", description="공모전 URL")
     poster_img_url: str = Field(example="https://example.com/poster.jpg", description="포스터 이미지 URL")
+    start_date: date = Field(example="2024-01-01", description="시작일")
     due_date: date = Field(example="2024-12-31", description="마감일")
     tags: List[Tag] = Field(example=[], description="연결된 태그들")
     
