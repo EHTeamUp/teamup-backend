@@ -14,6 +14,7 @@ from models.personality import (
     UserTraitProfile as UserTraitProfileModel, 
     ProfileRule as ProfileRuleModel
 )
+from routers.personality import find_matching_profile as personality_find_matching_profile
 from schemas.registration import (
     RegistrationStep1, RegistrationStep2, RegistrationStep3, RegistrationStep4,
     CompleteRegistration, RegistrationStatus, StepResponse
@@ -26,55 +27,14 @@ from utils.auth import get_password_hash, create_access_token
 from utils.email_auth import send_verification_email, verify_email_code, mark_email_as_verified, generate_verification_code, store_verification_code, is_email_verified
 from datetime import datetime, timedelta
 from typing import List
-from config import settings
+from config import settings 
 
 router = APIRouter(prefix="/registration", tags=["registration"])
 
 # 메모리 기반 회원가입 진행 상태 저장 
 registration_sessions = {}
 
-def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
-    """사용자 답변과 ProfileRule을 매칭하여 최적의 성향 찾기"""
-    
-    # 모든 ProfileRule 조회
-    profile_rules = db.query(ProfileRuleModel).all()
-    
-    best_match = None
-    best_score = -1
-    
-    for rule in profile_rules:
-        required_tags = rule.required_tags_json
-        
-        # JSON이 문자열인 경우 파싱
-        if isinstance(required_tags, str):
-            try:
-                import json
-                required_tags = json.loads(required_tags)
-            except json.JSONDecodeError:
-                continue
-        
-        # required_tags가 리스트가 아닌 경우 처리
-        if not isinstance(required_tags, list):
-            continue
-        
-        # 정확히 일치하는 태그 개수 계산
-        match_count = 0
-        traits_values = list(traits.values())
-        
-        for tag in required_tags:
-            if tag in traits_values:
-                match_count += 1
-        
-        # 모든 태그가 일치하는 경우만 고려 (정확한 매칭)
-        if match_count == len(required_tags):
-            # priority가 낮을수록 우선순위가 높음
-            score = 1000 - rule.priority + match_count
-            
-            if score > best_score:
-                best_score = score
-                best_match = rule
-    
-    return best_match
+
 
 # ===== 회원가입 관련 엔드포인트 =====
 
@@ -513,7 +473,7 @@ def complete_step4(step4: RegistrationStep4, db: Session = Depends(get_db)):
                 traits[question.key_name] = option.trait_tag
                
             # ProfileRule과 매칭하여 성향 결정
-            profile_rule = find_matching_profile(traits, db)
+            profile_rule = personality_find_matching_profile(traits, db)
             if not profile_rule:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
