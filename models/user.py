@@ -11,7 +11,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     is_deleted = Column(Boolean, default=False)  # 0: 활성, 1: 탈퇴
-    fcm_token = Column(String(500), nullable=True)  # FCM 토큰 추가
+    fcm_token = Column(String(500), nullable=True)  # FCM 토큰
     
     # Relationships
     user_skills = relationship("UserSkill", back_populates="user")

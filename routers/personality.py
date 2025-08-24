@@ -27,18 +27,14 @@ def get_questions(db: Session = Depends(get_db)):
             .order_by(QuestionModel.order_no)\
             .all()
         
-        print(f"DEBUG: Found {len(questions)} questions")
-        
         # 각 질문에 보기 추가
         for question in questions:
-            print(f"DEBUG: Question {question.id} ({question.key_name}): {question.text}")
             
             options = db.query(OptionModel)\
                 .filter(OptionModel.question_id == question.id)\
                 .order_by(OptionModel.order_no)\
                 .all()
             
-            print(f"DEBUG: Found {len(options)} options for question {question.id}")
             
             question.options = options
         
@@ -47,7 +43,6 @@ def get_questions(db: Session = Depends(get_db)):
             total_count=len(questions)
         )
     except Exception as e:
-        print(f"DEBUG: Error in get_questions: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
@@ -88,8 +83,6 @@ def submit_personality_test(request: SubmitTestRequest, db: Session = Depends(ge
         from models.user import User
         user = db.query(User).filter(User.user_id == request.user_id).first()
         if not user:
-            print(f"WARNING: User '{request.user_id}' not found. This might be during registration process.")
-            # 회원가입 중이므로 결과만 반환하고 DB에 저장하지 않음
             return TestResultResponse(
                 profile_code=profile_rule.profile_code,
                 display_name=profile_rule.display_name,
@@ -143,12 +136,10 @@ def find_matching_profile(traits: dict, db: Session) -> ProfileRuleModel:
             try:
                 required_tags = json.loads(required_tags)
             except json.JSONDecodeError:
-                print(f"DEBUG: Invalid JSON in required_tags_json for rule {rule.profile_code}")
                 continue
         
         # required_tags가 리스트가 아닌 경우 처리
-        if not isinstance(required_tags, list):
-            print(f"DEBUG: required_tags is not a list for rule {rule.profile_code}: {type(required_tags)}")
+        if not isinstance(required_tags, list): 
             continue
         
         # 일치하는 태그 개수 계산
