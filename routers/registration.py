@@ -630,7 +630,7 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
                 contest_name=exp_data["contest_name"],
                 award_date=exp_data["award_date"],
                 host_organization=exp_data["host_organization"],
-                award_name=exp_data["award_name"],
+                award_status=exp_data["award_status"],
                 description=exp_data["description"],
                 filter_id=exp_data["filter_id"]
             )

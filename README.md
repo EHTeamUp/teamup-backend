@@ -187,7 +187,7 @@ curl -X PUT "http://localhost:8000/api/v1/profile/experiences" \
            "contest_name": "2024 대학생 소프트웨어 경진대회",
            "award_date": "2024-12-01",
            "host_organization": "한국정보산업연합회",
-           "award_name": "대상",
+           "award_status": 1,
            "description": "팀 프로젝트 매칭 플랫폼으로 수상"
          }
        ]

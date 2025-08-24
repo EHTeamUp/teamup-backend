@@ -13,7 +13,7 @@ class Experience(Base):
     contest_name = Column(String(255), nullable=False, comment="공모전명")
     award_date = Column(Date, nullable=False, comment="수상 날짜")
     host_organization = Column(String(255), nullable=True, comment="주최 기관")
-    award_name = Column(String(255), nullable=False, comment="수상명 (예: 대상, 최우수상)")
+    award_status = Column(Integer, nullable=False, default=0, comment="수상 여부 (0: 참가, 1: 수상)")
     description = Column(Text, nullable=True, comment="설명 (어떤 작품으로 수상했는지 등)")
     
     # 필터링을 위한 필드
@@ -28,4 +28,4 @@ class Experience(Base):
     filter = relationship("Filter", back_populates="experiences")
     
     def __repr__(self):
-        return f"<Experience(contest_name='{self.contest_name}', award_name='{self.award_name}')>"
+        return f"<Experience(contest_name='{self.contest_name}', award_status={self.award_status})>"

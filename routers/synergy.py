@@ -52,8 +52,7 @@ def get_user_experiences_detailed(db: Session, user_id: str) -> List[UserExperie
     return [
         UserExperience(
             contest_name=exp.contest_name,
-            award_status=1 if exp.award_name else 0,  # 수상명이 있으면 1, 없으면 0
-            award_name=exp.award_name if exp.award_name else None
+            award_status=exp.award_status  # 0: 참가, 1: 수상
         ) for exp in experiences
     ]
 

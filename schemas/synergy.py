@@ -18,7 +18,6 @@ class UserRole(BaseModel):
 class UserExperience(BaseModel):
     contest_name: str = Field(example="2024 대학생 소프트웨어 경진대회", description="공모전명")
     award_status: int = Field(example=1, description="수상 여부 (0: 참가, 1: 수상)")
-    award_name: Optional[str] = Field(example="대상", description="수상명 (수상한 경우만)")
 
 class UserTrait(BaseModel):
     profile_code: str = Field(example="STRATEGIC_LEADER", description="프로필 코드")

@@ -233,7 +233,7 @@ def update_user_experiences(
                 contest_name=exp_data.contest_name,
                 award_date=exp_data.award_date,
                 host_organization=exp_data.host_organization,
-                award_name=exp_data.award_name,
+                award_status=exp_data.award_status,
                 description=exp_data.description,
                 filter_id=exp_data.filter_id
             )
@@ -335,7 +335,7 @@ def get_user_experiences(
                 "contest_name": exp.contest_name,
                 "award_date": exp.award_date,
                 "host_organization": exp.host_organization,
-                "award_name": exp.award_name,
+                "award_status": exp.award_status,
                 "description": exp.description,
                 "filter_id": exp.filter_id
             }
@@ -396,7 +396,7 @@ def get_user_mypage(
                 "contest_name": exp.contest_name,
                 "award_date": exp.award_date,
                 "host_organization": exp.host_organization,
-                "award_name": exp.award_name,
+                "award_status": exp.award_status,
                 "description": exp.description,
                 "filter_id": exp.filter_id
             }
