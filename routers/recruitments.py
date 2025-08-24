@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List
+from datetime import date
 from database import get_db
 from models.recruitment import RecruitmentPost, Application, ApplicationStatus
 from models.contest import Contest
@@ -40,10 +41,11 @@ def get_latest_recruitment_posts(
     """
     최신 모집 게시글 3개 조회
     """
-    # RecruitmentPost와 Contest를 조인하여 due_date와 contest_name 정보를 가져옴
+    today = date.today()
+    
     recruitment_posts = db.query(RecruitmentPost, Contest.due_date, Contest.name).join(
         Contest, RecruitmentPost.contest_id == Contest.contest_id
-    ).order_by(RecruitmentPost.created_at.desc()).limit(3).all()
+    ).filter(Contest.due_date >= today).order_by(RecruitmentPost.created_at.desc()).limit(3).all()
     
     # 결과를 RecruitmentPostList 형태로 변환
     result = []

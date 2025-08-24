@@ -113,12 +113,17 @@ def get_contests_by_filter(filter_id: int, db: Session = Depends(get_db)):
 
 
 
+from datetime import date
+
 @router.get("/latest", response_model=List[ContestSchema])
 def get_latest_contests(db: Session = Depends(get_db)):
-    """D-day 기준 공모전 3개 조회 (마감일이 가장 가까운 순)"""
+    """D-day 기준 공모전 3개 조회 """
     try:
-        # D-day 기준 공모전 3개 조회 (마감일 기준 오름차순)
+        today = date.today()
+        
+        # D-day 기준 공모전 3개 조회
         latest_contests = db.query(Contest)\
+            .filter(Contest.due_date >= today)\
             .order_by(Contest.due_date.asc())\
             .limit(3)\
             .all()

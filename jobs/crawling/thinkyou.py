@@ -18,7 +18,7 @@ def setup_driver():
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
-    # 헤드리스 모드 활성화
+    # 헤드리스 모드
     chrome_options.add_argument("--headless")
     
     driver = webdriver.Chrome(options=chrome_options)
