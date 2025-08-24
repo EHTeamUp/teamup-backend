@@ -142,7 +142,7 @@ def get_latest_contests(db: Session = Depends(get_db)):
             detail=f"Internal server error: {str(e)}"
         )
 
-@router.get("/{contest_id}")
+@router.get("/{contest_id}", response_model=ContestSchema)
 def get_contest_detail(contest_id: int, db: Session = Depends(get_db)):
     """공모전 상세 정보 조회"""
     try:
@@ -152,6 +152,16 @@ def get_contest_detail(contest_id: int, db: Session = Depends(get_db)):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Contest not found"
             )
+        
+        # 태그 정보 추가
+        contest.tags = []
+        contest_tags = db.query(ContestTag, Tag)\
+            .join(Tag, ContestTag.tag_id == Tag.tag_id)\
+            .filter(ContestTag.contest_id == contest.contest_id)\
+            .all()
+        
+        for contest_tag, tag in contest_tags:
+            contest.tags.append(tag)
         
         return contest
         
