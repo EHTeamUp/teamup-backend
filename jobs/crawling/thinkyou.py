@@ -255,7 +255,13 @@ def extract_contest_info(contest_element, excluded_contests=None):
         # 제목과 링크 추출
         link_elem = contest_element.find('a', href=True)
         if link_elem:
-            title = link_elem.get_text(strip=True)
+            # 제목만 정확히 가져오기 (h3 태그에서)
+            title_elem = link_elem.select_one('dl > dt > h3')
+            if title_elem:
+                title = title_elem.get_text(strip=True)
+            else:
+                title = link_elem.get_text(strip=True)
+            
             site_url = link_elem.get('href')
             if site_url and not site_url.startswith('http'):
                 site_url = "https://thinkyou.co.kr" + site_url
