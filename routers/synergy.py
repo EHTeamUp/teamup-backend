@@ -8,13 +8,43 @@ from models.experience import Experience
 from models.personality import UserTraitProfile, ProfileRule
 from models.skill import Skill
 from models.role import Role
-from schemas.synergy import SynergyRequest, SynergyResponse, SynergyUser, UserSkill, UserRole, UserExperience, UserTrait
+from schemas.synergy import (
+    SynergyRequest, SynergyResponse, SynergyUser, UserSkill, UserRole, 
+    UserTrait, SynergyAnalysisRequest, SynergyAnalysisResponse,
+    ApplicantData
+)
 
 from typing import List
-
-
+import json
 
 router = APIRouter(prefix="/synergy", tags=["synergy"])
+
+# 임시 머신러닝 예측 함수
+def predict_synergy(data: SynergyAnalysisRequest) -> SynergyAnalysisResponse:
+    """
+    임시 예측 함수
+    """
+    
+    # JSON 구조로 출력
+    print("\n=== JSON 구조 ===")
+    json_data = {
+        "filtering_id": data.filtering_id,
+        "applicants": [
+            {
+                "role": applicant.role,
+                "skill": applicant.skill,
+                "experience": applicant.experience,
+                "tendency_type": applicant.tendency_type,
+                "goal": applicant.goal,
+                "time": applicant.time,
+                "problem": applicant.problem
+            }
+            for applicant in data.applicants
+        ]
+    }
+    print(json.dumps(json_data, ensure_ascii=False, indent=2))
+    
+    return SynergyAnalysisResponse(result="시너지 결과입니다")
 
 # Synergy용 함수들
 def get_user_skills_detailed(db: Session, user_id: str) -> List[UserSkill]:
@@ -41,18 +71,7 @@ def get_user_roles_detailed(db: Session, user_id: str) -> List[UserRole]:
         ) for user_role in user_roles
     ]
 
-def get_user_experiences_detailed(db: Session, user_id: str) -> List[UserExperience]:
-    """사용자의 경험 정보를 상세하게 가져옵니다."""
-    experiences = db.query(Experience).filter(
-        Experience.user_id == user_id
-    ).all()
-    
-    return [
-        UserExperience(
-            contest_name=exp.contest_name,
-            award_status=exp.award_status  # 0: 참가, 1: 수상
-        ) for exp in experiences
-    ]
+
 
 def get_user_traits_detailed(db: Session, user_id: str) -> UserTrait:
     """사용자의 성향 정보를 상세하게 가져옵니다."""
@@ -66,12 +85,16 @@ def get_user_traits_detailed(db: Session, user_id: str) -> UserTrait:
             ProfileRule.profile_code == trait_profile.profile_code
         ).first()
         
-        display_name = profile_rule.display_name if profile_rule else trait_profile.profile_code
-        
-        return UserTrait(
-            profile_code=trait_profile.profile_code,
-            display_name=display_name
-        )
+        if profile_rule:
+            return UserTrait(
+                profile_code=trait_profile.profile_code,
+                display_name=profile_rule.display_name
+            )
+        else:
+            return UserTrait(
+                profile_code=trait_profile.profile_code,
+                display_name=trait_profile.profile_code
+            )
     return None
 
 def create_synergy_user(db: Session, user_id: str) -> SynergyUser:
@@ -80,9 +103,62 @@ def create_synergy_user(db: Session, user_id: str) -> SynergyUser:
         user_id=user_id,
         skills=get_user_skills_detailed(db, user_id),
         roles=get_user_roles_detailed(db, user_id),
-        experiences=get_user_experiences_detailed(db, user_id),
         traits=get_user_traits_detailed(db, user_id)
     )
+
+def get_user_experience_string(db: Session, user_id: str) -> str:
+    """사용자의 경험을 문자열 형태로 변환 (filter_id:award_status 형식)"""
+    experiences = db.query(Experience).filter(
+        Experience.user_id == user_id
+    ).all()
+    
+    if not experiences:
+        return ""
+    
+    experience_parts = []
+    for exp in experiences:
+        experience_parts.append(f"{exp.filter_id}:{exp.award_status}")
+    
+    return ", ".join(experience_parts)
+
+def get_user_roles_string(db: Session, user_id: str) -> str:
+    """사용자의 역할을 문자열로 변환"""
+    user_roles = db.query(UserRoleModel).join(Role).filter(
+        UserRoleModel.user_id == user_id
+    ).all()
+    
+    roles = [user_role.role.name for user_role in user_roles]
+    return ", ".join(roles) if roles else ""
+
+def get_user_skills_string(db: Session, user_id: str) -> str:
+    """사용자의 스킬을 문자열로 변환"""
+    user_skills = db.query(UserSkillModel).join(Skill).filter(
+        UserSkillModel.user_id == user_id
+    ).all()
+    
+    skills = [user_skill.skill.name for user_skill in user_skills]
+    return ", ".join(skills) if skills else ""
+
+def map_tags_to_fields(required_tags: List[str]) -> dict:
+    """required_tags_json을 tendency_type, goal, time, problem으로 매핑"""
+    mapping = {
+        'tendency_type': None,
+        'goal': None,
+        'time': None,
+        'problem': None
+    }
+    
+    for tag in required_tags:
+        if tag in ['LEADER', 'SUPPORTER']:
+            mapping['tendency_type'] = tag
+        elif tag in ['QUALITY', 'SCHEDULE']:
+            mapping['goal'] = tag
+        elif tag in ['MORNING', 'NIGHT']:
+            mapping['time'] = tag
+        elif tag in ['ANALYTIC', 'ADHOC']:
+            mapping['problem'] = tag
+    
+    return mapping
 
 @router.post("/analyze", response_model=SynergyResponse)
 def analyze_synergy(
@@ -105,8 +181,50 @@ def analyze_synergy(
             for user in users
         ]
         
+        # 머신러닝 예측을 위한 데이터 준비
+        applicants = []
+        for user in users:
+            # 사용자 정보 가져오기
+            traits = get_user_traits_detailed(db, user.user_id)
+            roles_str = get_user_roles_string(db, user.user_id)
+            skills_str = get_user_skills_string(db, user.user_id)
+            experience_str = get_user_experience_string(db, user.user_id)
+            
+            # 태그 매핑
+            if traits:
+                # profile_rules에서 required_tags_json 가져오기
+                profile_rule = db.query(ProfileRule).filter(
+                    ProfileRule.profile_code == traits.profile_code
+                ).first()
+                required_tags = profile_rule.required_tags_json if profile_rule else []
+            else:
+                required_tags = []
+            
+            tag_mapping = map_tags_to_fields(required_tags)
+            
+            applicant = ApplicantData(
+                role=roles_str,
+                skill=skills_str,
+                experience=experience_str,
+                tendency_type=tag_mapping['tendency_type'] or "UNKNOWN",
+                goal=tag_mapping['goal'] or "UNKNOWN",
+                time=tag_mapping['time'] or "UNKNOWN",
+                problem=tag_mapping['problem'] or "UNKNOWN"
+            )
+            applicants.append(applicant)
+        
+        # 머신러닝 예측 요청 데이터 생성
+        analysis_request = SynergyAnalysisRequest(
+            filtering_id=request.filter_id,
+            applicants=applicants
+        )
+        
+        # 머신러닝 예측 실행
+        synergy_result = predict_synergy(analysis_request)
+        
         return SynergyResponse(
-            users=all_users
+            users=all_users,
+            synergy_result=synergy_result
         )
         
     except HTTPException:
