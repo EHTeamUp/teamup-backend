@@ -70,8 +70,7 @@ def update_user_skills(
         # 사용자 정의 스킬 생성 및 연결
         for custom_skill_name in custom_skills_data:
             new_skill = Skill(
-                name=custom_skill_name,
-                is_custom=True
+                name=custom_skill_name
             )
             db.add(new_skill)
             db.flush()  # skill_id 생성
@@ -97,8 +96,7 @@ def update_user_skills(
         return {
             "message": "스킬이 성공적으로 수정되었습니다.",
             "updated_skills": {
-                "skill_ids": skill_update.skill_ids,
-                "custom_skills": custom_skills_data
+                "skill_ids": skill_update.skill_ids
             }
         }
         
@@ -165,8 +163,7 @@ def update_user_roles(
         # 사용자 정의 역할 생성 및 연결
         for custom_role_name in custom_roles_data:
             new_role = Role(
-                name=custom_role_name,
-                is_custom=True
+                name=custom_role_name
             )
             db.add(new_role)
             db.flush()  # role_id 생성
@@ -192,8 +189,7 @@ def update_user_roles(
         return {
             "message": "역할이 성공적으로 수정되었습니다.",
             "updated_roles": {
-                "role_ids": role_update.role_ids,
-                "custom_roles": custom_roles_data
+                "role_ids": role_update.role_ids
             }
         }
         
@@ -267,19 +263,14 @@ def get_user_skills(
         user_skills = db.query(UserSkill).filter(UserSkill.user_id == current_user.user_id).all()
         
         skill_ids = []
-        custom_skills = []
         
         for user_skill in user_skills:
             skill = db.query(Skill).filter(Skill.skill_id == user_skill.skill_id).first()
             if skill:
-                if skill.is_custom:
-                    custom_skills.append(skill.name)
-                else:
-                    skill_ids.append(skill.skill_id)
+                skill_ids.append(skill.skill_id)
         
         return {
-            "skill_ids": skill_ids,
-            "custom_skills": custom_skills
+            "skill_ids": skill_ids
         }
         
     except Exception as e:
@@ -299,19 +290,14 @@ def get_user_roles(
         user_roles = db.query(UserRole).filter(UserRole.user_id == current_user.user_id).all()
         
         role_ids = []
-        custom_roles = []
         
         for user_role in user_roles:
             role = db.query(Role).filter(Role.role_id == user_role.role_id).first()
             if role:
-                if role.is_custom:
-                    custom_roles.append(role.name)
-                else:
-                    role_ids.append(role.role_id)
+                role_ids.append(role.role_id)
         
         return {
-            "role_ids": role_ids,
-            "custom_roles": custom_roles
+            "role_ids": role_ids
         }
         
     except Exception as e:
@@ -366,28 +352,20 @@ def get_user_mypage(
         # 사용자의 스킬 정보 조회
         user_skills = db.query(UserSkill).filter(UserSkill.user_id == user_id).all()
         skill_ids = []
-        custom_skills = []
         
         for user_skill in user_skills:
             skill = db.query(Skill).filter(Skill.skill_id == user_skill.skill_id).first()
             if skill:
-                if skill.is_custom:
-                    custom_skills.append(skill.name)
-                else:
-                    skill_ids.append(skill.skill_id)
+                skill_ids.append(skill.skill_id)
         
         # 사용자의 역할 정보 조회
         user_roles = db.query(UserRole).filter(UserRole.user_id == user_id).all()
         role_ids = []
-        custom_roles = []
         
         for user_role in user_roles:
             role = db.query(Role).filter(Role.role_id == user_role.role_id).first()
             if role:
-                if role.is_custom:
-                    custom_roles.append(role.name)
-                else:
-                    role_ids.append(role.role_id)
+                role_ids.append(role.role_id)
         
         # 사용자의 경험 정보 조회
         experiences = db.query(Experience).filter(Experience.user_id == user_id).all()
@@ -411,12 +389,10 @@ def get_user_mypage(
                 "is_deleted": user.is_deleted
             },
             "skills": {
-                "skill_ids": skill_ids,
-                "custom_skills": custom_skills
+                "skill_ids": skill_ids
             },
             "roles": {
-                "role_ids": role_ids,
-                "custom_roles": custom_roles
+                "role_ids": role_ids
             },
             "experiences": experience_list
         }

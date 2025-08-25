@@ -25,8 +25,7 @@ def get_user_skills_detailed(db: Session, user_id: str) -> List[UserSkill]:
     
     return [
         UserSkill(
-            skill_name=user_skill.skill.name,
-            is_custom=user_skill.skill.is_custom
+            skill_name=user_skill.skill.name
         ) for user_skill in user_skills
     ]
 
@@ -38,8 +37,7 @@ def get_user_roles_detailed(db: Session, user_id: str) -> List[UserRole]:
     
     return [
         UserRole(
-            role_name=user_role.role.name,
-            is_custom=user_role.role.is_custom
+            role_name=user_role.role.name
         ) for user_role in user_roles
     ]
 

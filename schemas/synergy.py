@@ -9,11 +9,9 @@ class SynergyRequest(BaseModel):
 
 class UserSkill(BaseModel):
     skill_name: str = Field(example="Java", description="스킬 이름")
-    is_custom: bool = Field(example=False, description="사용자 정의 스킬 여부")
 
 class UserRole(BaseModel):
     role_name: str = Field(example="프론트엔드 개발자", description="역할 이름")
-    is_custom: bool = Field(example=False, description="사용자 정의 역할 여부")
 
 class UserExperience(BaseModel):
     contest_name: str = Field(example="2024 대학생 소프트웨어 경진대회", description="공모전명")

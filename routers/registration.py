@@ -181,12 +181,11 @@ def register(user: UserCreateWithVerification, db: Session = Depends(get_db)):
 def get_available_skills(db: Session = Depends(get_db)):
     """사용 가능한 스킬 목록 조회"""
     try:
-        skills = db.query(Skill).filter(Skill.is_custom == False).all()
+        skills = db.query(Skill).all()
         return [
             {
                 "skill_id": skill.skill_id,
-                "name": skill.name,
-                "is_custom": skill.is_custom
+                "name": skill.name
             }
             for skill in skills
         ]
@@ -200,12 +199,11 @@ def get_available_skills(db: Session = Depends(get_db)):
 def get_available_roles(db: Session = Depends(get_db)):
     """사용 가능한 역할 목록 조회"""
     try:
-        roles = db.query(Role).filter(Role.is_custom == False).all()
+        roles = db.query(Role).all()
         return [
             {
                 "role_id": role.role_id,
-                "name": role.name,
-                "is_custom": role.is_custom
+                "name": role.name
             }
             for role in roles
         ]
@@ -537,8 +535,7 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
         # 사용자 정의 스킬 생성 및 연결
         for custom_skill_name in step2_data["custom_skills"]:
             new_skill = Skill(
-                name=custom_skill_name,
-                is_custom=True
+                name=custom_skill_name
             )
             db.add(new_skill)
             db.flush()  # skill_id 생성
@@ -561,8 +558,7 @@ def complete_registration(user_id: str, db: Session = Depends(get_db)):
         # 사용자 정의 역할 생성 및 연결
         for custom_role_name in step2_data["custom_roles"]:
             new_role = Role(
-                name=custom_role_name,
-                is_custom=True
+                name=custom_role_name
             )
             db.add(new_role)
             db.flush()  # role_id 생성
