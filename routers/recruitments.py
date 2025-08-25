@@ -5,7 +5,7 @@ from typing import List
 from datetime import date
 from database import get_db
 from models.recruitment import RecruitmentPost, Application, ApplicationStatus
-from models.contest import Contest
+from models.contest import Contest, ContestFilter
 from models.user import User
 from schemas.recruitment import RecruitmentPostCreate, RecruitmentPostResponse, RecruitmentPostUpdate, RecruitmentPostList
 from utils.auth import get_current_user
@@ -93,6 +93,12 @@ def get_recruitment_posts(
             Application.status == ApplicationStatus.accepted
         ).count()
         
+        # contest_id에 해당하는 filter_id 조회 (contest당 하나의 filter)
+        filter_result = db.query(ContestFilter.filter_id).filter(
+            ContestFilter.contest_id == post.contest_id
+        ).first()
+        filter_id = filter_result[0] if filter_result else None
+        
         post_dict = {
             "recruitment_post_id": post.recruitment_post_id,
             "title": post.title,
@@ -103,7 +109,8 @@ def get_recruitment_posts(
             "user_id": post.user_id,
             "created_at": post.created_at,
             "due_date": due_date,
-            "accepted_count": accepted_count
+            "accepted_count": accepted_count,
+            "filter_id": filter_id
         }
         result.append(RecruitmentPostList(**post_dict))
     
