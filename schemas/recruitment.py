@@ -31,6 +31,7 @@ class RecruitmentPostResponse(BaseModel):
     created_at: datetime
     due_date: Optional[date] = None
     accepted_count: int = 0
+    filter_id: Optional[int] = None
     
     class Config:
         from_attributes = True

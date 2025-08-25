@@ -137,6 +137,18 @@ def get_recruitment_post(
     
     post, due_date, contest_name = result
     
+    # contest_id에 해당하는 filter_id 조회 
+    filter_result = db.query(ContestFilter.filter_id).filter(
+        ContestFilter.contest_id == post.contest_id
+    ).first()
+    filter_id = filter_result[0] if filter_result else None
+    
+    # accepted된 지원자 수 계산
+    accepted_count = db.query(Application).filter(
+        Application.recruitment_post_id == post.recruitment_post_id,
+        Application.status == ApplicationStatus.accepted
+    ).count()
+    
     # 결과를 RecruitmentPostResponse 형태로 변환
     post_dict = {
         "recruitment_post_id": post.recruitment_post_id,
@@ -147,7 +159,9 @@ def get_recruitment_post(
         "contest_name": contest_name,
         "user_id": post.user_id,
         "created_at": post.created_at,
-        "due_date": due_date
+        "due_date": due_date,
+        "accepted_count": accepted_count,
+        "filter_id": filter_id
     }
     
     return RecruitmentPostResponse(**post_dict)
