@@ -64,3 +64,6 @@ class SynergyResponse(BaseModel):
     synergy_result: Optional[SynergyAnalysisResponse] = Field(
         default=None, description="시너지 분석 결과"
     )
+    filter_name: Optional[str] = Field(
+        default=None, description="필터 이름"
+    )

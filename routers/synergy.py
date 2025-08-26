@@ -8,6 +8,7 @@ from models.experience import Experience
 from models.personality import UserTraitProfile, ProfileRule
 from models.skill import Skill
 from models.role import Role
+from models.contest import Filter
 from schemas.synergy import (
     SynergyRequest, SynergyResponse, SynergyUser, UserSkill, UserRole, 
     UserTrait, SynergyAnalysisRequest, SynergyAnalysisResponse,
@@ -265,9 +266,14 @@ def analyze_synergy(
         # 머신러닝 예측 실행
         synergy_result = predict_synergy(analysis_request)
         
+        # filter_name 조회
+        filter_obj = db.query(Filter).filter(Filter.filter_id == request.filter_id).first()
+        filter_name = filter_obj.name if filter_obj else None
+        
         return SynergyResponse(
             users=all_users,
-            synergy_result=synergy_result
+            synergy_result=synergy_result,
+            filter_name=filter_name
         )
         
     except HTTPException:
