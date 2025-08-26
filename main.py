@@ -6,6 +6,9 @@ from config import settings
 from models import *
 from routers import users, registration
 from routers import profile, contests, recruitments, applications, comments, personality, synergy, notifications
+
+# ML 모델 초기화
+from ml.synergy_service import synergy_service
 import asyncio
 import threading
 import time
@@ -80,6 +83,19 @@ def init_scheduler():
 
 # 데이터베이스 초기화 시도 (실패해도 앱은 계속 실행)
 database_initialized = init_database()
+
+# ML 모델 초기화 상태 확인
+def check_ml_model_status():
+    """ML 모델 로드 상태 확인"""
+    if synergy_service.is_ready():
+        print("🤖 ML 시너지 예측 모델이 성공적으로 로드되었습니다!")
+        return True
+    else:
+        print("⚠️ ML 시너지 예측 모델 로드에 실패했습니다.")
+        print("📝 시너지 분석 기능은 사용할 수 없습니다.")
+        return False
+
+ml_model_ready = check_ml_model_status()
 
 # FastAPI 앱 객체 생성
 app = FastAPI(

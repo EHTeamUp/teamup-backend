@@ -332,3 +332,20 @@ celerybeat.pid
 cython_debug/ 
 
 jobs/data/
+
+# Machine Learning artifacts and data
+artifacts/
+data/
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.model
+*.weights
+
+# ML model training outputs
+models/
+checkpoints/
+logs/
+tensorboard_logs/

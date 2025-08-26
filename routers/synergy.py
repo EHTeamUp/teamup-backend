@@ -13,38 +13,52 @@ from schemas.synergy import (
     UserTrait, SynergyAnalysisRequest, SynergyAnalysisResponse,
     ApplicantData
 )
+from ml.synergy_service import synergy_service
 
 from typing import List
 import json
 
 router = APIRouter(prefix="/synergy", tags=["synergy"])
 
-# 임시 머신러닝 예측 함수
+# 머신러닝 예측 함수
 def predict_synergy(data: SynergyAnalysisRequest) -> SynergyAnalysisResponse:
     """
-    임시 예측 함수
+    실제 머신러닝 모델을 사용한 시너지 예측 함수 (최적화된 버전)
     """
-    
-    # JSON 구조로 출력
-    print("\n=== JSON 구조 ===")
-    json_data = {
-        "filtering_id": data.filtering_id,
-        "applicants": [
-            {
-                "role": applicant.role,
-                "skill": applicant.skill,
-                "experience": applicant.experience,
-                "tendency_type": applicant.tendency_type,
-                "goal": applicant.goal,
-                "time": applicant.time,
-                "problem": applicant.problem
+    try:
+        # 팀 데이터를 딕셔너리 리스트로 변환
+        team_data_list = []
+        for applicant in data.applicants:
+            team_data_list.append({
+                'role': applicant.role,
+                'skill': applicant.skill,
+                'experience': applicant.experience,
+                'tendency_type': applicant.tendency_type,
+                'goal': applicant.goal,
+                'time': applicant.time,
+                'problem': applicant.problem
+            })
+        
+        # 싱글톤 서비스를 통한 머신러닝 예측 실행
+        result = synergy_service.predict_synergy(team_data_list, data.filtering_id)
+        
+        # SynergyAnalysisResponse로 변환
+        return SynergyAnalysisResponse(
+            synergy_score=result['synergy_score'],
+            explanation=result['explanation']
+        )
+        
+    except Exception as e:
+        print(f"머신러닝 예측 중 오류 발생: {e}")
+        # 오류 발생 시 기본 응답 반환
+        return SynergyAnalysisResponse(
+            synergy_score=50.0,
+            explanation={
+                "baseline": 0.5,
+                "good_points": [],
+                "bad_points": []
             }
-            for applicant in data.applicants
-        ]
-    }
-    print(json.dumps(json_data, ensure_ascii=False, indent=2))
-    
-    return SynergyAnalysisResponse(result="시너지 결과입니다")
+        )
 
 # Synergy용 함수들
 def get_user_skills_detailed(db: Session, user_id: str) -> List[UserSkill]:

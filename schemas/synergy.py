@@ -21,8 +21,21 @@ class SynergyAnalysisRequest(BaseModel):
     filtering_id: int = Field(example=1, description="공모전 필터링 ID")
     applicants: List[ApplicantData] = Field(description="지원자 정보 목록")
 
+class FeatureContribution(BaseModel):
+    feature: str = Field(example="experience_relevance_score", description="피처 이름")
+    value: float = Field(example=100.0, description="피처 값")
+    contribution: float = Field(example=0.15, description="기여도")
+
+class Explanation(BaseModel):
+    """SHAP 분석 결과"""
+    baseline: float = Field(example=0.55, description="기준값")
+    good_points: List[FeatureContribution] = Field(description="긍정적 요소들")
+    bad_points: List[FeatureContribution] = Field(description="개선이 필요한 요소들")
+
 class SynergyAnalysisResponse(BaseModel):
-    result: str = Field(example="시너지 결과입니다", description="시너지 분석 결과")
+    """머신러닝 시너지 분석 결과"""
+    synergy_score: float = Field(example=85.5, description="시너지 점수 (0-100)")
+    explanation: Explanation = Field(description="시너지 분석 설명")
 
 class UserSkill(BaseModel):
     skill_name: str = Field(example="Java", description="스킬 이름")
