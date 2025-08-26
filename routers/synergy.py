@@ -14,6 +14,7 @@ from schemas.synergy import (
     ApplicantData
 )
 from ml.synergy_service import synergy_service
+from ml.message_generator import SynergyMessageGenerator
 
 from typing import List
 import json
@@ -42,10 +43,29 @@ def predict_synergy(data: SynergyAnalysisRequest) -> SynergyAnalysisResponse:
         # 싱글톤 서비스를 통한 머신러닝 예측 실행
         result = synergy_service.predict_synergy(team_data_list, data.filtering_id)
         
+        # 메시지 생성
+        message_generator = SynergyMessageGenerator()
+        description_message = message_generator.generate_messages(result['explanation'])
+        
+        # explanation에 메시지 추가
+        explanation_with_messages = result['explanation'].copy()
+        
+        # good_points에 메시지 추가
+        for i, point in enumerate(explanation_with_messages['good_points']):
+            feature = point['feature']
+            if feature in description_message['detailed_analysis']:
+                explanation_with_messages['good_points'][i]['message'] = description_message['detailed_analysis'][feature]['message']
+        
+        # bad_points에 메시지 추가
+        for i, point in enumerate(explanation_with_messages['bad_points']):
+            feature = point['feature']
+            if feature in description_message['detailed_analysis']:
+                explanation_with_messages['bad_points'][i]['message'] = description_message['detailed_analysis'][feature]['message']
+        
         # SynergyAnalysisResponse로 변환
         return SynergyAnalysisResponse(
             synergy_score=result['synergy_score'],
-            explanation=result['explanation']
+            explanation=explanation_with_messages
         )
         
     except Exception as e:

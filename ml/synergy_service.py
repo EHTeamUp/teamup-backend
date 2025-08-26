@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 from .predict import SynergyPredictor
+from .message_generator import SynergyMessageGenerator
 
 class SynergyService:
     """

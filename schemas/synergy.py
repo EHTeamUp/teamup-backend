@@ -25,6 +25,7 @@ class FeatureContribution(BaseModel):
     feature: str = Field(example="experience_relevance_score", description="피처 이름")
     value: float = Field(example=100.0, description="피처 값")
     contribution: float = Field(example=0.15, description="기여도")
+    message: str = Field(example="유사한 프로젝트 경험이 풍부해요!", description="시너지 분석 한줄 설명") 
 
 class Explanation(BaseModel):
     """SHAP 분석 결과"""

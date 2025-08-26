@@ -103,7 +103,7 @@ class SynergyPredictor:
                     "good_points": good_points,
                     "bad_points": bad_points
                 }
-                print("SHAP 분석 완료!")
+                # print("SHAP 분석 완료!")
             except Exception as e:
                 print(f"SHAP 분석 중 오류 발생: {e}")
                 explanation_data = self._create_fallback_explanation(predict_df, team_size)
