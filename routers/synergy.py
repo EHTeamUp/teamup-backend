@@ -50,21 +50,30 @@ def predict_synergy(data: SynergyAnalysisRequest) -> SynergyAnalysisResponse:
         # explanation에 메시지 추가
         explanation_with_messages = result['explanation'].copy()
         
+        # 소수점을 일의자리까지 표시 
+        explanation_with_messages['baseline'] = float(f"{explanation_with_messages['baseline']:.1f}")
+        
         # good_points에 메시지 추가
         for i, point in enumerate(explanation_with_messages['good_points']):
             feature = point['feature']
             if feature in description_message['detailed_analysis']:
                 explanation_with_messages['good_points'][i]['message'] = description_message['detailed_analysis'][feature]['message']
+            # 소수점 조정 
+            explanation_with_messages['good_points'][i]['value'] = float(f"{point['value']:.1f}")
+            explanation_with_messages['good_points'][i]['contribution'] = float(f"{point['contribution']:.1f}")
         
         # bad_points에 메시지 추가
         for i, point in enumerate(explanation_with_messages['bad_points']):
             feature = point['feature']
             if feature in description_message['detailed_analysis']:
                 explanation_with_messages['bad_points'][i]['message'] = description_message['detailed_analysis'][feature]['message']
+            # 소수점 조정 
+            explanation_with_messages['bad_points'][i]['value'] = float(f"{point['value']:.1f}")
+            explanation_with_messages['bad_points'][i]['contribution'] = float(f"{point['contribution']:.1f}")
         
         # SynergyAnalysisResponse로 변환
         return SynergyAnalysisResponse(
-            synergy_score=result['synergy_score'],
+            synergy_score=float(f"{result['synergy_score']:.1f}"),
             explanation=explanation_with_messages
         )
         
