@@ -361,12 +361,12 @@ python main_crawler.py
 - **APScheduler**: 백그라운드 작업 스케줄링
 
 ### 서버  & 배포
-<img src="https://img.shields.io/badge/AWS EC2-FF9E0F?style=for-the-badge&logo=AWS EC2&logoColor=white"> 
+<img src="https://img.shields.io/badge/EC2-FF9E0F?style=for-the-badge&logo=EC2&logoColor=white"> 
 
 - **AWS EC2**: 서버 호스팅  및 배포
 
 ### 협업 도구
- <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white"> 
+<img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white"> 
 <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
 <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white">
 
