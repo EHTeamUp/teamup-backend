@@ -307,11 +307,7 @@ python main_crawler.py
 ## 🛠️ 기술 스택
 
 ### Backend
-<img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
-<img src="https://img.shields.io/badge/fastapi-009688?style=for-the-badge&logo=fastapi&logoColor=white"> 
-<img src="https://img.shields.io/badge/sqlalchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white"> 
-<img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
-<img src="https://img.shields.io/badge/pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white">
+<img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"> <img src="https://img.shields.io/badge/fastapi-009688?style=for-the-badge&logo=fastapi&logoColor=white">  <img src="https://img.shields.io/badge/sqlalchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white"> <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white">
 
 - **Python**: 개발 언어
 - **FastAPI**: 고성능 Python 웹 프레임워크
@@ -321,12 +317,7 @@ python main_crawler.py
 
 
 ### AI & ML
-<img src="https://img.shields.io/badge/ollama-000000?style=for-the-badge&logo=ollama&logoColor=white">
-<img src="https://img.shields.io/badge/scikitlearn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white">
-<img src="https://img.shields.io/badge/xgboost-150458?style=for-the-badge&logo=xgboost&logoColor=white">
-<img src="https://img.shields.io/badge/shap-150458?style=for-the-badge&logo=shap&logoColor=white">
-<img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white">
-<img src="https://img.shields.io/badge/numpy-013243?style=for-the-badge&logo=numpy&logoColor=white">
+<img src="https://img.shields.io/badge/ollama-000000?style=for-the-badge&logo=ollama&logoColor=white"> <img src="https://img.shields.io/badge/scikitlearn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white"> <img src="https://img.shields.io/badge/xgboost-150458?style=for-the-badge&logo=xgboost&logoColor=white"> <img src="https://img.shields.io/badge/shap-150458?style=for-the-badge&logo=shap&logoColor=white"> <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white"> <img src="https://img.shields.io/badge/numpy-013243?style=for-the-badge&logo=numpy&logoColor=white">
 
 - **Ollama**: 로컬 AI 모델 (LLaVA)
 - **Scikit-learn**: 머신러닝 라이브러리
@@ -335,17 +326,13 @@ python main_crawler.py
 - **Pandas/Numpy**: 데이터 처리
 
 ### 크롤링 & 데이터 수집
-<img src="https://img.shields.io/badge/selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white">
-<img src="https://img.shields.io/badge/beautifulsoup-000000?style=for-the-badge&logo=beautifulsoup&logoColor=white">
+<img src="https://img.shields.io/badge/selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white"> <img src="https://img.shields.io/badge/beautifulsoup-000000?style=for-the-badge&logo=beautifulsoup&logoColor=white">
 
 - **Selenium**: 동적 웹페이지 크롤링
 - **BeautifulSoup**: HTML 파싱
 
 ### 인증 & 보안
-<img src="https://img.shields.io/badge/jwt-40AEF0?style=for-the-badge&logo=jwt&logoColor=white">
-<img src="https://img.shields.io/badge/bcrypt-232F3E?style=for-the-badge&logo=bcrpt&logoColor=white">
-<img src="https://img.shields.io/badge/firebase-DD2C00?style=for-the-badge&logo=firebase&logoColor=white">
-<img src="https://img.shields.io/badge/gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white">
+<img src="https://img.shields.io/badge/jwt-40AEF0?style=for-the-badge&logo=jwt&logoColor=white"> <img src="https://img.shields.io/badge/bcrypt-232F3E?style=for-the-badge&logo=bcrpt&logoColor=white"> <img src="https://img.shields.io/badge/firebase-DD2C00?style=for-the-badge&logo=firebase&logoColor=white"> <img src="https://img.shields.io/badge/gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white">
 
 
 - **JWT**: 토큰 기반 인증
@@ -354,8 +341,7 @@ python main_crawler.py
 - **Gmail SMTP**: 이메일 인증
 
 ### 알림 & 통신
-<img src="https://img.shields.io/badge/firebase-DD2C00?style=for-the-badge&logo=firebase&logoColor=white">
-<img src="https://img.shields.io/badge/APScheduler-3776AB?style=for-the-badge&logo=APScheduler&logoColor=white">
+<img src="https://img.shields.io/badge/firebase-DD2C00?style=for-the-badge&logo=firebase&logoColor=white"> <img src="https://img.shields.io/badge/APScheduler-3776AB?style=for-the-badge&logo=APScheduler&logoColor=white">
 
 - **FCM**: Firebase Cloud Messaging
 - **APScheduler**: 백그라운드 작업 스케줄링
@@ -366,9 +352,7 @@ python main_crawler.py
 - **AWS EC2**: 서버 호스팅  및 배포
 
 ### 협업 도구
-<img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white"> 
-<img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
-<img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white">
+<img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white"> <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white"> <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white">
 
 - **Git**: 버전 관리
 - **GitHub**: 코드 저장소 및 협업
